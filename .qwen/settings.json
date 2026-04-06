@@ -11,7 +11,11 @@
       "Bash(sleep *)",
       "Bash(npm install)",
       "Bash(npm run *)",
-      "Bash(npm test)"
+      "Bash(npm test)",
+      "Bash(node *)",
+      "Bash(cat *)",
+      "Bash(npx *)",
+      "Bash(rm *)"
     ]
   },
   "$version": 3
