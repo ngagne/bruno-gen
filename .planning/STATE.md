@@ -11,15 +11,15 @@ See: .planning/PROJECT.md (updated 2026-04-06 after initialization)
 
 **Milestone:** v1.0 (greenfield)
 **Active phase:** Phase 1: Project Scaffold & IR Types
-**Phase status:** ◐ Planned (ready to execute)
+**Phase status:** ✓ Complete
 
 ### Progress
 
 ```
-Progress: ░░░░░░░░░░ 0%
+Progress: ██░░░░░░░░ 17%
 ```
 
-**Phase 1: Project Scaffold & IR Types** — 0/4 plans complete
+**Phase 1: Project Scaffold & IR Types** — 4/4 plans complete
 **Plans:** 33 total across 6 phases
 
 ### Requirements
@@ -37,10 +37,12 @@ Progress: ░░░░░░░░░░ 0%
 - 2026-04-06: Roadmap created (6 phases, 33 plans)
 - 2026-04-06: Phase 1 discussed — 18 decisions captured in 1-CONTEXT.md
 - 2026-04-06: Phase 1 planned — 4 parallel plans in 01-PLAN.md
+- 2026-04-06: Phase 1 executed — all 4 plans complete, all checks pass (build, lint, format, test)
+- 2026-04-06: Requirements updated: QUAL-03 Jest → Vitest
 
 ### Next Action
 
-Run `/808-execute-phase 1` to implement Phase 1.
+Run `/808-discuss-phase 2` to discuss Phase 2 (Parser Layer), or `/808-plan-phase 2` to plan directly.
 
 ---
 *Last updated: 2026-04-06 after roadmap creation*

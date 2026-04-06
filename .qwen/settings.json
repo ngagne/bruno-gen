@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//Users/nickgagne/.qwen/**)",
+      "Bash(then *)",
+      "Bash(fi)",
+      "Bash(ls *)",
+      "Bash(mkdir *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(sleep *)",
+      "Bash(npm install)",
+      "Bash(npm run *)",
+      "Bash(npm test)"
+    ]
+  },
+  "$version": 3
+}

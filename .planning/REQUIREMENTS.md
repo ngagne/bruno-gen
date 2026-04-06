@@ -86,11 +86,11 @@
 
 ### Code Quality
 
-- [ ] **QUAL-01**: eslint configured and enforced on all source files
-- [ ] **QUAL-02**: Prettier configured with .prettierrc and .editorconfig
-- [ ] **QUAL-03**: Jest test suite with 80% code coverage threshold enforced
-- [ ] **QUAL-04**: TypeScript 6 strict mode
-- [ ] **QUAL-05**: Target runtime Node.js 24
+- [x] **QUAL-01**: eslint configured and enforced on all source files
+- [x] **QUAL-02**: Prettier configured with .prettierrc and .editorconfig
+- [x] **QUAL-03**: Vitest test suite with 80% code coverage threshold enforced
+- [x] **QUAL-04**: TypeScript 6 strict mode
+- [x] **QUAL-05**: Target runtime Node.js 24
 
 ### Publishing
 
@@ -191,11 +191,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CFG-04 | Phase 5 | Pending |
 | CFG-05 | Phase 5 | Pending |
 | CFG-06 | Phase 5 | Pending |
-| QUAL-01 | Phase 1 | Pending |
-| QUAL-02 | Phase 1 | Pending |
-| QUAL-03 | Phase 1 | Pending |
-| QUAL-04 | Phase 1 | Pending |
-| QUAL-05 | Phase 1 | Pending |
+| QUAL-01 | Phase 1 | Validated |
+| QUAL-02 | Phase 1 | Validated |
+| QUAL-03 | Phase 1 | Validated |
+| QUAL-04 | Phase 1 | Validated |
+| QUAL-05 | Phase 1 | Validated |
 | PUB-01 | Phase 6 | Pending |
 | PUB-02 | Phase 6 | Pending |
 | PUB-03 | Phase 6 | Pending |

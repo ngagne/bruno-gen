@@ -6,7 +6,7 @@ Build a Node.js 24 CLI tool and importable library (CommonJS + ESM) that convert
 
 ## Phases
 
-- [ ] **Phase 1: Project Scaffold & IR Types** — Foundation: TypeScript, tooling, build pipeline, and the Intermediate Representation type system
+- [x] **Phase 1: Project Scaffold & IR Types** — Foundation: TypeScript, tooling, build pipeline, and the Intermediate Representation type system
 - [ ] **Phase 2: Parser Layer** — OpenAPI 3.x, Swagger 2.0, and GraphQL parsers that produce the unified IR
 - [ ] **Phase 3: Bruno Generator Layer** — IR to .bru file generation: requests, collection, folders, environment, auth
 - [ ] **Phase 4: CLI Interface & Test Assertions** — Commander.js CLI with all flags, optional test assertion generation
