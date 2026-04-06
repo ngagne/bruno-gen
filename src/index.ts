@@ -1,4 +1,4 @@
-// Library entry point — re-exports all public IR types.
+// Library entry point — re-exports all public IR types and parser API.
 // Consumers: import { CollectionIR } from "bruno-collection-generator";
 
 export type {
@@ -37,3 +37,16 @@ export type {
   Warning,
   WarningSeverity,
 } from "./ir/index.js";
+
+// Parser layer
+export {
+  parse,
+  validate,
+  detectFormat,
+  loadSpec,
+  OpenApiParser,
+  SwaggerParser,
+  GraphQLParser,
+  DirectoryParser,
+} from "./parsers/index.js";
+export type { SpecParser, ParseOptions, SpecInput } from "./parsers/index.js";
