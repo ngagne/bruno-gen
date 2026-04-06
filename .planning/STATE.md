@@ -48,9 +48,13 @@ Progress: ████░░░░░░ 33%
   - 02-03: GraphQL SDL parser with type/endpoint mapping
   - 02-04: GraphQL directory parser with file discovery and merging
 
+### Recent Activity (cont.)
+
+- 2026-04-06: Phase 3 discussed — 21 decisions captured in 03-CONTEXT.md (grouping, examples, auth, collection vars)
+
 ### Next Action
 
-Run `/808-discuss-phase 3` to discuss Phase 3 (Bruno Generator Layer), or `/808-plan-phase 3` to plan directly.
+Run `/808-plan-phase 3` to plan Phase 3 (Bruno Generator Layer).
 
 ---
 *Last updated: 2026-04-06 after Phase 2 completion*
