@@ -11,7 +11,7 @@ See: .planning/PROJECT.md (updated 2026-04-06 after initialization)
 
 **Milestone:** v1.0 (greenfield)
 **Active phase:** Phase 1: Project Scaffold & IR Types
-**Phase status:** ○ Pending
+**Phase status:** ◐ Planned (ready to execute)
 
 ### Progress
 
@@ -35,10 +35,12 @@ Progress: ░░░░░░░░░░ 0%
 - 2026-04-06: Research completed (STACK, FEATURES, ARCHITECTURE, PITFALLS, SUMMARY)
 - 2026-04-06: Requirements defined (64 v1 requirements across 9 categories)
 - 2026-04-06: Roadmap created (6 phases, 33 plans)
+- 2026-04-06: Phase 1 discussed — 18 decisions captured in 1-CONTEXT.md
+- 2026-04-06: Phase 1 planned — 4 parallel plans in 01-PLAN.md
 
 ### Next Action
 
-Run `/808-discuss-phase 1` to discuss and plan Phase 1, or `/808-plan-phase 1` to plan directly.
+Run `/808-execute-phase 1` to implement Phase 1.
 
 ---
 *Last updated: 2026-04-06 after roadmap creation*
