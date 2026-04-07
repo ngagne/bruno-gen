@@ -9,6 +9,7 @@ import type { ResolvedConfig } from "../config/types.js";
 import { prepareOutputDir, writeBruFile } from "./file-writer.js";
 import { generateCollectionBru } from "./collection-generator.js";
 import { generateEnvironmentBru } from "./environment-generator.js";
+import { generateBrunoJson } from "./bruno-json-generator.js";
 import { generateFolderGroups } from "./folder-generator.js";
 import { generateRequestBru } from "./request-generator.js";
 import { sanitizeRequestFilename } from "./path-sanitizer.js";
@@ -74,7 +75,17 @@ async function generate(ir: CollectionIR, options: GenerateOptions): Promise<Gen
     // Step 1: Prepare output directory
     await prepareOutputDir(options.outputDir);
 
-    // Step 2: Generate collection.bru
+    // Step 2: Generate bruno.json (required for valid Bruno collection)
+    const brunoJson = generateBrunoJson(transformedIR);
+    const brunoJsonPath = `${options.outputDir}/bruno.json`;
+    const brunoJsonResult = await writeBruFile(brunoJson, brunoJsonPath);
+    if (brunoJsonResult.success) {
+      filesWritten.push(brunoJsonPath);
+    } else {
+      warnings.push(`Failed to write bruno.json: ${brunoJsonResult.error}`);
+    }
+
+    // Step 3: Generate collection.bru
     const collectionBru = generateCollectionBru(transformedIR);
     const collectionPath = `${options.outputDir}/collection.bru`;
     const collectionResult = await writeBruFile(collectionBru, collectionPath);
@@ -84,7 +95,7 @@ async function generate(ir: CollectionIR, options: GenerateOptions): Promise<Gen
       warnings.push(`Failed to write collection.bru: ${collectionResult.error}`);
     }
 
-    // Step 3: Generate environment file
+    // Step 4: Generate environment file
     const envBru = generateEnvironmentBru(transformedIR);
     const envPath = `${options.outputDir}/environments/default.bru`;
     const envResult = await writeBruFile(envBru, envPath);
@@ -94,7 +105,7 @@ async function generate(ir: CollectionIR, options: GenerateOptions): Promise<Gen
       warnings.push(`Failed to write environment file: ${envResult.error}`);
     }
 
-    // Step 4: Generate folder groups and request files
+    // Step 5: Generate folder groups and request files
     const folderGroups = generateFolderGroups(transformedIR, { format: options.grouping });
 
     for (const group of folderGroups) {

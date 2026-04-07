@@ -98,6 +98,9 @@ describe("generator integration tests", () => {
     expect(result.filesWritten.length).toBeGreaterThan(0);
     expect(result.warnings).toHaveLength(0);
 
+    // Verify bruno.json is in the files written
+    expect(result.filesWritten.some((f) => f.endsWith("bruno.json"))).toBe(true);
+
     // Verify collection.bru was created
     const collectionBruPath = join(testOutputDir, "collection.bru");
     const collectionContent = await readFile(collectionBruPath, "utf-8");
@@ -113,6 +116,16 @@ describe("generator integration tests", () => {
     expect(envContent).toContain("vars {");
     expect(envContent).toContain("baseUrl: https://api.example.com/v1");
     expect(envContent).toContain("bearerAuthToken");
+
+    // Verify bruno.json was created (required for valid Bruno collection)
+    const brunoJsonPath = join(testOutputDir, "bruno.json");
+    const brunoJsonContent = await readFile(brunoJsonPath, "utf-8");
+    const brunoJson = JSON.parse(brunoJsonContent);
+    expect(brunoJson.type).toBe("collection");
+    expect(brunoJson.name).toBe("Test API");
+    expect(brunoJson.version).toBe("1.0.0");
+    expect(brunoJson.description).toBe("A test API collection");
+    expect(brunoJson.scripts.filesystemAccess.allow).toBe(false);
 
     // Verify folder was created
     const usersFolder = join(testOutputDir, "users");

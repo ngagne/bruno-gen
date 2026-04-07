@@ -16,6 +16,9 @@ export {
   generateAuthVars,
 } from "./environment-generator.js";
 
+export { generateBrunoJson } from "./bruno-json-generator.js";
+export type { BrunoJson } from "./bruno-json-generator.js";
+
 export { generateFolderGroups, generateFolderBru } from "./folder-generator.js";
 export type { FolderGroup } from "./folder-generator.js";
 
