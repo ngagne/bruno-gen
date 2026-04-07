@@ -16,7 +16,11 @@
       "Bash(cat *)",
       "Bash(npx *)",
       "Bash(rm *)",
-      "Bash(echo *)"
+      "Bash(echo *)",
+      "Bash(wc *)",
+      "Bash(chmod *)",
+      "Bash(npm pack *)",
+      "Bash(cp *)"
     ]
   },
   "$version": 3

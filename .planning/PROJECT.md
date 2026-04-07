@@ -1,5 +1,21 @@
 # Bruno Collection Generator
 
+## Current State
+
+**Shipped version:** v1.0 (2026-04-06)
+**Status:** Production-ready CLI tool and importable library
+**Tests:** 195 passing across 24 test files
+**Requirements:** 76 total, all satisfied
+
+## v1.0 Accomplishments
+
+1. **Complete parser layer** — OpenAPI 3.x, Swagger 2.0, and GraphQL SDL parsers produce unified IR with $ref resolution, circular reference handling, and spec validation
+2. **Complete generator layer** — IR → .bru conversion: collection.bru, request files, folder grouping (tag/path/flat), environment variables, auth schemes, response examples, post-response test scripts
+3. **CLI interface** — Commander.js with 7 flags (--format, --tests, --dry-run, --config, --verbose, spec, output), proper exit codes, TTY-aware output with spinners
+4. **Library API** — `generate()` function, `CollectionBuilder` fluent class, `loadConfig()` with auto-discovery, `mergeConfig()` three-layer merge, full TypeScript types
+5. **Plugin system** — `transformIR` and `preOutput` hooks with waterfall execution, config file plugin loading
+6. **Publishing polish** — 329-line README with full docs, 3 real-world test fixtures (stripe-like, github-like, petstore), npm pack verified, dual CJS/ESM exports verified
+
 ## What This Is
 
 A CLI tool and importable npm library that converts API specifications (OpenAPI 3.x, Swagger 2.0, GraphQL schemas) into Bruno API collections. Users point it at a spec file or directory and get a ready-to-use Bruno collection with requests, environment variables, example request bodies, example responses, and optional test assertions — no manual translation needed.
@@ -8,7 +24,23 @@ A CLI tool and importable npm library that converts API specifications (OpenAPI 
 
 Turn any OpenAPI or GraphQL spec into a working Bruno collection in one command — preserving spec semantics including auth, examples, and structure.
 
-## Requirements
+## Next Milestone Goals
+
+TBD — start with `/808-new-milestone` to define v1.1 scope.
+
+Potential areas for v1.1:
+- `brunogen validate` subcommand — validate specs without generating
+- `brunogen init` subcommand — scaffold a config file
+- Watch mode / incremental generation
+- Named config profiles (staging, production)
+- More real-world spec validation and edge case handling
+
+---
+
+<details>
+<summary>v1.0 Original Planning Content</summary>
+
+## Requirements (Original v1.0)
 
 ### Validated
 
@@ -59,7 +91,7 @@ Turn any OpenAPI or GraphQL spec into a working Bruno collection in one command 
 - **Runtime**: Node.js 24 — modern JS features available, no legacy compatibility needed
 - **Language**: TypeScript 6 — full type safety for both CLI and library surface
 - **Distribution**: Must support both CommonJS and ESM imports for the library API
-- **Quality**: Jest with 80% code coverage threshold enforced in CI
+- **Quality**: Vitest with 80% code coverage threshold enforced in CI
 - **Code quality**: eslint + prettier + .editorconfig for consistent formatting
 
 ## Key Decisions
@@ -68,30 +100,15 @@ Turn any OpenAPI or GraphQL spec into a working Bruno collection in one command 
 |----------|-----------|---------|
 | Single collection per spec (not split by tag) | Simpler output, matches how most teams use Bruno | ✓ Good — matches user workflow |
 | Auth via environment variables | Bruno's native pattern; lets users fill in secrets securely | ✓ Good — follows Bruno conventions |
-| Include example responses from spec | Makes collections immediately useful for exploration | — Pending |
-| Warn and continue on spec issues | Better to produce partial output than fail entirely | — Pending |
-| Full regeneration only | Incremental adds complexity; specs should be the source of truth | — Pending |
-| Both simple function + builder API | Simple covers 80% of cases; builder for advanced composition | — Pending |
-| CI-friendly with dry-run mode | Enables CI/CD pipeline integration for automated testing | — Pending |
-| Plugin system + config file | Config for simple overrides, plugins for custom transformations | — Pending |
-| Public npm package | Tool has broad appeal beyond internal use | — Pending |
+| Include example responses from spec | Makes collections immediately useful for exploration | ✓ Validated — included in generated requests |
+| Warn and continue on spec issues | Better to produce partial output than fail entirely | ✓ Validated — warnings exit 0 |
+| Full regeneration only | Incremental adds complexity; specs should be the source of truth | ✓ Validated — clean and predictable |
+| Both simple function + builder API | Simple covers 80% of cases; builder for advanced composition | ✓ Validated — both APIs work |
+| CI-friendly with dry-run mode | Enables CI/CD pipeline integration for automated testing | ✓ Validated --dry-run works |
+| Plugin system + config file | Config for simple overrides, plugins for custom transformations | ✓ Validated — transformIR + preOutput hooks |
+| Public npm package | Tool has broad appeal beyond internal use | ✓ Ready for publish |
 
-## Evolution
-
-This document evolves at phase transitions and milestone boundaries.
-
-**After each phase transition** (via `/808-transition`):
-1. Requirements invalidated? → Move to Out of Scope with reason
-2. Requirements validated? → Move to Validated with phase reference
-3. New requirements emerged? → Add to Active
-4. Decisions to log? → Add to Key Decisions
-5. "What This Is" still accurate? → Update if drifted
-
-**After each milestone** (via `/808-complete-milestone`):
-1. Full review of all sections
-2. Core Value check — still the right priority?
-3. Audit Out of Scope — reasons still valid?
-4. Update Context with current state
+</details>
 
 ---
-*Last updated: 2026-04-06 after initialization*
+*Last updated: 2026-04-06 after v1.0 milestone completion*

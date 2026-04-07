@@ -6,7 +6,7 @@ This is the **Bruno Collection Generator** — a Node.js 24 CLI tool and importa
 
 **Core value:** Turn any OpenAPI or GraphQL spec into a working Bruno collection in one command — preserving spec semantics including auth, examples, and structure.
 
-**Tech stack:** TypeScript 6, Commander.js, @apidevtools/swagger-parser, graphql (16.x), tsup (dual CJS/ESM), Jest (80% coverage), eslint, prettier.
+**Tech stack:** TypeScript 6, Commander.js, @apidevtools/swagger-parser, graphql (16.x), tsup (dual CJS/ESM), Vitest (80% coverage), eslint, prettier.
 
 **Architecture:** 5-layer — CLI → Library API → Config → Parser (IR) → Generator → Output
 
@@ -39,7 +39,7 @@ This project uses the 808 planning and execution workflow.
 
 - TypeScript strict mode, Node.js 24 target
 - eslint + prettier enforced — always run before committing
-- Jest tests with 80% coverage minimum
+- Vitest tests with 80% coverage minimum
 - Dual CJS/ESM exports — test both import paths
 - Meaningful variable/function names; avoid abbreviations
 - Comments only for non-obvious decisions; code should be self-documenting

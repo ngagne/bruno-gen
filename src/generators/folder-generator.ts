@@ -66,7 +66,9 @@ function generateTagGroups(ir: CollectionIR): FolderGroup[] {
   let sequence = 1;
 
   // Sort tags by their appearance in the tags array for consistent ordering
-  const sortedTags = ir.tags ? ir.tags.map((t) => t.name) : Array.from(tagMap.keys());
+  // Fall back to discovered tags from endpoints if ir.tags is empty
+  const sortedTags =
+    ir.tags && ir.tags.length > 0 ? ir.tags.map((t) => t.name) : Array.from(tagMap.keys());
 
   for (const tagName of sortedTags) {
     const endpoints = tagMap.get(tagName);

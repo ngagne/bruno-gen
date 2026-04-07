@@ -54,3 +54,14 @@ export type { SpecParser, ParseOptions, SpecInput } from "./parsers/index.js";
 // Generator layer
 export { generate } from "./generators/index.js";
 export type { GenerateOptions, GenerateResult } from "./generators/index.js";
+
+// Library API
+export { CollectionBuilder } from "./api/CollectionBuilder.js";
+export type { BuilderOptions } from "./api/CollectionBuilder.js";
+
+// Config layer
+export { loadConfig } from "./config/index.js";
+export type { ResolvedConfig } from "./config/index.js";
+
+// Plugin system
+export type { Plugin, PluginHooks, PluginContext, PreOutputContext } from "./plugins/index.js";

@@ -9,6 +9,9 @@ import { resolve } from "node:path";
 import { parse } from "./parsers/parse.js";
 import { generate } from "./generators/orchestrator.js";
 import { formatSummary, createSpinner, formatError, printDryRunTree } from "./cli/output.js";
+import { loadConfig, mergeConfig } from "./config/index.js";
+import { loadPlugin } from "./plugins/load.js";
+import type { Plugin } from "./plugins/types.js";
 
 interface CliOptions {
   format: "tag" | "path" | "flat";
@@ -18,6 +21,14 @@ interface CliOptions {
   verbose: boolean;
 }
 
+/** Default generation options. */
+const DEFAULTS = {
+  format: "tag" as const,
+  tests: false,
+  force: false,
+  outputDir: "./bruno-output",
+};
+
 function main(): void {
   const program = new Command();
   const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf-8"));
@@ -26,14 +37,14 @@ function main(): void {
     .name("bruno-gen")
     .description("Convert OpenAPI, Swagger, and GraphQL specs into Bruno API collections")
     .version(pkg.version, "-V, --version")
-    .argument("<spec>", "Path to OpenAPI, Swagger, or GraphQL spec file")
-    .argument("[output]", "Output directory for the Bruno collection", "./bruno-output")
+    .argument("[spec]", "Path to OpenAPI, Swagger, or GraphQL spec file")
+    .argument("[output]", "Output directory for the Bruno collection")
     .option("--format <tag|path|flat>", "Folder grouping strategy", "tag")
     .option("--tests", "Generate post-response test assertions")
     .option("--dry-run", "Print generated tree to stdout without writing files")
-    .option("--config <path>", "Path to config file (reserved for Phase 5)")
+    .option("--config <path>", "Path to config file")
     .option("--verbose", "Include stack traces in error output")
-    .action(async (spec: string, output: string, opts: CliOptions) => {
+    .action(async (spec: string | undefined, output: string | undefined, opts: CliOptions) => {
       const startTime = Date.now();
 
       // Validate format option
@@ -44,17 +55,45 @@ function main(): void {
         process.exit(1);
       }
 
-      const specPath = resolve(spec);
-      const outputDir = resolve(output);
+      // Step 1: Load config file
+      const configFile = await loadConfig(process.cwd(), opts.config);
 
-      // Check spec file exists
-      try {
-        await import("node:fs").then((fs) => {
-          fs.statSync(specPath);
-        });
-      } catch {
-        process.stderr.write(`Spec file not found: ${specPath}\n`);
+      // Step 2: Merge defaults < config < CLI flags
+      const cliFlags = {
+        format: opts.format,
+        tests: opts.tests,
+        outputDir: output,
+      };
+      const resolved = mergeConfig(DEFAULTS, configFile, cliFlags);
+
+      // Step 3: Resolve spec path (CLI arg > config.spec)
+      const specPath = spec ? resolve(spec) : resolved.spec ? resolve(resolved.spec) : undefined;
+      if (!specPath) {
+        process.stderr.write(
+          "Error: No spec file provided. Provide a <spec> argument or set 'spec' in your config file.\n",
+        );
         process.exit(1);
+      }
+
+      // Step 4: Resolve output dir
+      const outputDir = resolve(resolved.outputDir ?? DEFAULTS.outputDir);
+
+      // Step 5: Load plugins from config
+      const loadedPlugins: Plugin[] = [];
+      if (resolved.plugins && resolved.plugins.length > 0) {
+        const pluginSpinner = createSpinner("Loading plugins...");
+        pluginSpinner.start();
+        try {
+          for (const pluginSource of resolved.plugins) {
+            const plugin = await loadPlugin(pluginSource);
+            loadedPlugins.push(plugin);
+          }
+          pluginSpinner.succeed(`Loaded ${loadedPlugins.length} plugin(s)`);
+        } catch (error) {
+          pluginSpinner.fail("Failed to load plugins");
+          process.stderr.write(formatError(error as Error, opts.verbose));
+          process.exit(1);
+        }
       }
 
       // Dry-run mode
@@ -66,8 +105,8 @@ function main(): void {
           spinner.succeed("Spec parsed successfully");
 
           printDryRunTree(ir, {
-            format: opts.format,
-            generateTests: opts.tests,
+            format: resolved.format ?? opts.format,
+            generateTests: resolved.tests ?? opts.tests,
           });
 
           const elapsed = Date.now() - startTime;
@@ -93,9 +132,27 @@ function main(): void {
 
         const result = await generate(ir, {
           outputDir,
-          grouping: opts.format,
-          generateTests: opts.tests,
+          grouping: resolved.format ?? opts.format,
+          generateTests: resolved.tests ?? opts.tests,
+          force: resolved.force,
+          plugins: loadedPlugins.length > 0 ? loadedPlugins : undefined,
+          specPath,
+          resolvedConfig: resolved,
         });
+
+        if (!result.success && result.warnings.length > 0) {
+          // Check if it's a plugin error (success: false with warnings)
+          const isPluginError = result.warnings.some(
+            (w) => w.includes("Plugin") && w.includes("failed"),
+          );
+          if (isPluginError) {
+            genSpinner.fail("Generation failed");
+            for (const warning of result.warnings) {
+              process.stderr.write(`Error: ${warning}\n`);
+            }
+            process.exit(1);
+          }
+        }
 
         genSpinner.succeed("Collection generated successfully");
 

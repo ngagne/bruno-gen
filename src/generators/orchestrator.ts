@@ -4,6 +4,8 @@
  */
 
 import type { CollectionIR } from "../ir/index.js";
+import type { Plugin, PluginContext } from "../plugins/types.js";
+import type { ResolvedConfig } from "../config/types.js";
 import { prepareOutputDir, writeBruFile } from "./file-writer.js";
 import { generateCollectionBru } from "./collection-generator.js";
 import { generateEnvironmentBru } from "./environment-generator.js";
@@ -20,6 +22,12 @@ interface GenerateOptions {
   grouping?: "tag" | "path" | "flat";
   /** Generate post-response test assertions. */
   generateTests?: boolean;
+  /** Plugin array to run during generation. */
+  plugins?: Plugin[];
+  /** Spec path (for plugin context). */
+  specPath?: string;
+  /** Resolved config (for plugin context). */
+  resolvedConfig?: ResolvedConfig;
 }
 
 interface GenerateResult {
@@ -40,11 +48,34 @@ async function generate(ir: CollectionIR, options: GenerateOptions): Promise<Gen
   const usedFilenames = new Set<string>();
 
   try {
+    // Step 0: Run transformIR plugin hooks (waterfall)
+    let transformedIR = ir;
+    if (options.plugins && options.plugins.length > 0) {
+      const pluginContext: PluginContext = {
+        specPath: options.specPath ?? "unknown",
+        options: options.resolvedConfig ?? {},
+      };
+      for (const plugin of options.plugins) {
+        if (plugin.hooks.transformIR) {
+          try {
+            transformedIR = await plugin.hooks.transformIR(transformedIR, pluginContext);
+          } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            return {
+              success: false,
+              filesWritten,
+              warnings: [`Plugin '${plugin.name}' transformIR hook failed: ${message}`],
+            };
+          }
+        }
+      }
+    }
+
     // Step 1: Prepare output directory
     await prepareOutputDir(options.outputDir);
 
     // Step 2: Generate collection.bru
-    const collectionBru = generateCollectionBru(ir);
+    const collectionBru = generateCollectionBru(transformedIR);
     const collectionPath = `${options.outputDir}/collection.bru`;
     const collectionResult = await writeBruFile(collectionBru, collectionPath);
     if (collectionResult.success) {
@@ -54,7 +85,7 @@ async function generate(ir: CollectionIR, options: GenerateOptions): Promise<Gen
     }
 
     // Step 3: Generate environment file
-    const envBru = generateEnvironmentBru(ir);
+    const envBru = generateEnvironmentBru(transformedIR);
     const envPath = `${options.outputDir}/environments/default.bru`;
     const envResult = await writeBruFile(envBru, envPath);
     if (envResult.success) {
@@ -64,7 +95,7 @@ async function generate(ir: CollectionIR, options: GenerateOptions): Promise<Gen
     }
 
     // Step 4: Generate folder groups and request files
-    const folderGroups = generateFolderGroups(ir, { format: options.grouping });
+    const folderGroups = generateFolderGroups(transformedIR, { format: options.grouping });
 
     for (const group of folderGroups) {
       // Determine the directory for request files
@@ -95,7 +126,7 @@ async function generate(ir: CollectionIR, options: GenerateOptions): Promise<Gen
         const endpoint = group.endpoints[i];
 
         // Generate request.bru content
-        const requestBru = generateRequestBru(endpoint, ir, {
+        const requestBru = generateRequestBru(endpoint, transformedIR, {
           seq: i + 1,
           baseUrl: "{{baseUrl}}",
           generateTests: options.generateTests,
@@ -105,7 +136,31 @@ async function generate(ir: CollectionIR, options: GenerateOptions): Promise<Gen
         const filename = sanitizeRequestFilename(endpoint, usedFilenames);
         const requestPath = `${folderDir}/${filename}`;
 
-        const requestResult = await writeBruFile(requestBru, requestPath);
+        // Run preOutput plugin hooks (waterfall)
+        let finalContent = requestBru;
+        if (options.plugins && options.plugins.length > 0) {
+          const preOutputCtx = {
+            filePath: requestPath,
+            endpoint,
+            folder: group.folderName,
+          };
+          for (const plugin of options.plugins) {
+            if (plugin.hooks.preOutput) {
+              try {
+                finalContent = await plugin.hooks.preOutput(finalContent, preOutputCtx);
+              } catch (error) {
+                const message = error instanceof Error ? error.message : String(error);
+                return {
+                  success: false,
+                  filesWritten,
+                  warnings: [`Plugin '${plugin.name}' preOutput hook failed: ${message}`],
+                };
+              }
+            }
+          }
+        }
+
+        const requestResult = await writeBruFile(finalContent, requestPath);
         if (requestResult.success) {
           filesWritten.push(requestPath);
         } else {

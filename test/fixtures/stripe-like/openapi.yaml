@@ -1,0 +1,500 @@
+openapi: "3.0.3"
+info:
+  title: Stripe-like Payment API
+  description: A payment processing API inspired by Stripe, exercising nested $refs, multiple auth types, and pagination.
+  version: "2023.10.16"
+  contact:
+    name: API Support
+    email: api@example-payments.com
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+servers:
+  - url: https://api.example-payments.com/v1
+    description: Production server
+  - url: https://sandbox.example-payments.com/v1
+    description: Sandbox server
+
+security:
+  - ApiKeyAuth: []
+  - OAuth2:
+      - payments:read
+      - payments:write
+
+paths:
+  /charges:
+    get:
+      operationId: listCharges
+      summary: List all charges
+      description: Returns a paginated list of charges with pagination headers.
+      tags:
+        - Charges
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+            maximum: 100
+          description: Number of charges to return
+        - name: starting_after
+          in: query
+          schema:
+            type: string
+          description: Cursor for pagination
+      responses:
+        "200":
+          description: A paginated list of charges
+          headers:
+            Link:
+              schema:
+                type: string
+              description: Pagination link header
+            X-Total-Count:
+              schema:
+                type: integer
+              description: Total number of charges
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChargeList"
+              examples:
+                sample:
+                  value:
+                    data:
+                      - id: ch_1N2a3b4c5d
+                        amount: 2000
+                        currency: usd
+                        status: succeeded
+                    has_more: true
+    post:
+      operationId: createCharge
+      summary: Create a charge
+      tags:
+        - Charges
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateChargeRequest"
+            examples:
+              basic:
+                value:
+                  amount: 2000
+                  currency: usd
+                  source: tok_visa
+                  description: "Test charge"
+      responses:
+        "201":
+          description: Charge created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Charge"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /charges/{chargeId}:
+    get:
+      operationId: retrieveCharge
+      summary: Retrieve a charge
+      tags:
+        - Charges
+      parameters:
+        - name: chargeId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The charge object
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Charge"
+        "404":
+          description: Charge not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /customers:
+    get:
+      operationId: listCustomers
+      summary: List customers
+      tags:
+        - Customers
+      parameters:
+        - name: email
+          in: query
+          schema:
+            type: string
+          description: Filter by email
+      responses:
+        "200":
+          description: List of customers
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerList"
+    post:
+      operationId: createCustomer
+      summary: Create a customer
+      tags:
+        - Customers
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCustomerRequest"
+      responses:
+        "201":
+          description: Customer created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+
+  /subscriptions:
+    post:
+      operationId: createSubscription
+      summary: Create a subscription for a customer
+      tags:
+        - Subscriptions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSubscriptionRequest"
+      responses:
+        "201":
+          description: Subscription created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Subscription"
+
+  /subscriptions/{subscriptionId}:
+    get:
+      operationId: retrieveSubscription
+      summary: Retrieve a subscription
+      tags:
+        - Subscriptions
+      parameters:
+        - name: subscriptionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The subscription object
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Subscription"
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: Your API key for authentication
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://auth.example-payments.com/oauth/authorize
+          tokenUrl: https://auth.example-payments.com/oauth/token
+          scopes:
+            payments:read: Read payment data
+            payments:write: Create and modify payments
+            customers:read: Read customer data
+            customers:write: Create and modify customers
+
+  schemas:
+    Charge:
+      type: object
+      required:
+        - id
+        - amount
+        - currency
+        - status
+      properties:
+        id:
+          type: string
+          example: ch_1N2a3b4c5d
+        amount:
+          type: integer
+          format: int64
+          example: 2000
+          description: Amount in cents
+        currency:
+          type: string
+          example: usd
+        status:
+          type: string
+          enum:
+            - succeeded
+            - pending
+            - failed
+          example: succeeded
+        source:
+          $ref: "#/components/schemas/PaymentSource"
+        customer:
+          $ref: "#/components/schemas/CustomerRef"
+        description:
+          type: string
+          example: "Charge for order #12345"
+        created:
+          type: string
+          format: date-time
+          example: "2023-10-16T12:00:00Z"
+        metadata:
+          $ref: "#/components/schemas/Metadata"
+
+    ChargeList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Charge"
+        has_more:
+          type: boolean
+          example: true
+        url:
+          type: string
+          example: "/v1/charges"
+
+    CreateChargeRequest:
+      type: object
+      required:
+        - amount
+        - currency
+      properties:
+        amount:
+          type: integer
+          format: int64
+          example: 2000
+        currency:
+          type: string
+          example: usd
+        source:
+          type: string
+          example: tok_visa
+        customer:
+          type: string
+          example: cus_abc123
+        description:
+          type: string
+          example: "Test charge"
+        metadata:
+          $ref: "#/components/schemas/Metadata"
+
+    Customer:
+      type: object
+      required:
+        - id
+        - email
+      properties:
+        id:
+          type: string
+          example: cus_abc123
+        email:
+          type: string
+          format: email
+          example: "jane.doe@example.com"
+        name:
+          type: string
+          example: "Jane Doe"
+        balance:
+          type: integer
+          format: int64
+          example: 0
+          description: Current balance in cents
+        created:
+          type: string
+          format: date-time
+        metadata:
+          $ref: "#/components/schemas/Metadata"
+
+    CustomerRef:
+      type: object
+      description: A reference to a customer object
+      properties:
+        id:
+          type: string
+          example: cus_abc123
+        object:
+          type: string
+          enum:
+            - customer
+
+    CustomerList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Customer"
+        has_more:
+          type: boolean
+
+    CreateCustomerRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+          example: "john.doe@example.com"
+        name:
+          type: string
+          example: "John Doe"
+        description:
+          type: string
+        metadata:
+          $ref: "#/components/schemas/Metadata"
+
+    Subscription:
+      type: object
+      required:
+        - id
+        - customer
+        - status
+      properties:
+        id:
+          type: string
+          example: sub_xyz789
+        customer:
+          $ref: "#/components/schemas/CustomerRef"
+        status:
+          type: string
+          enum:
+            - active
+            - past_due
+            - canceled
+            - trialing
+          example: active
+        plan:
+          $ref: "#/components/schemas/Plan"
+        current_period_start:
+          type: string
+          format: date-time
+        current_period_end:
+          type: string
+          format: date-time
+        cancel_at_period_end:
+          type: boolean
+          example: false
+
+    CreateSubscriptionRequest:
+      type: object
+      required:
+        - customer
+        - plan
+      properties:
+        customer:
+          type: string
+          example: cus_abc123
+        plan:
+          type: string
+          example: plan_premium_monthly
+        trial_period_days:
+          type: integer
+          example: 14
+        metadata:
+          $ref: "#/components/schemas/Metadata"
+
+    Plan:
+      type: object
+      properties:
+        id:
+          type: string
+          example: plan_premium_monthly
+        amount:
+          type: integer
+          format: int64
+          example: 1999
+        currency:
+          type: string
+          example: usd
+        interval:
+          type: string
+          enum:
+            - month
+            - year
+          example: month
+        nickname:
+          type: string
+          example: "Premium Monthly"
+
+    PaymentSource:
+      type: object
+      description: Payment source details
+      properties:
+        id:
+          type: string
+          example: card_visa_4242
+        object:
+          type: string
+          enum:
+            - card
+            - bank_account
+        brand:
+          type: string
+          example: visa
+        last4:
+          type: string
+          example: "4242"
+        exp_month:
+          type: integer
+          example: 12
+        exp_year:
+          type: integer
+          example: 2025
+
+    Metadata:
+      type: object
+      description: Arbitrary key-value pairs for storing additional information
+      additionalProperties:
+        type: string
+      example:
+        order_id: "ord_12345"
+        campaign: "summer_sale"
+
+    Error:
+      type: object
+      required:
+        - type
+        - message
+      properties:
+        type:
+          type: string
+          enum:
+            - invalid_request_error
+            - api_error
+            - authentication_error
+          example: invalid_request_error
+        message:
+          type: string
+          example: "No such charge: ch_invalid"
+        code:
+          type: string
+          example: resource_missing
+        param:
+          type: string
+          description: The parameter that caused the error
+          example: chargeId

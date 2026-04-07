@@ -12,7 +12,7 @@ export default defineConfig([
     target: "es2022",
     platform: "node",
     cjsInterop: true,
-    bundle: false,
+    bundle: true,
   },
   // CLI entry point — ESM only, runs directly via node, appends to dist
   {
