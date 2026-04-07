@@ -83,7 +83,9 @@ export class SwaggerParser_ {
     const servers = (spec.servers as Server[]) || [];
 
     const components = (spec.components as UnknownObj) || {};
-    const securitySchemes = mapSecuritySchemes(components.securitySchemes as UnknownObj | undefined);
+    const securitySchemes = mapSecuritySchemes(
+      components.securitySchemes as UnknownObj | undefined,
+    );
     const defaultSecurity = mapSecurityRequirements(spec.security as UnknownObj[] | undefined);
     const tags = ((spec.tags as UnknownObj[]) || []).map((t) => ({
       name: (t?.name as string) || "",
@@ -91,14 +93,10 @@ export class SwaggerParser_ {
       externalDocs: t?.externalDocs as Tag["externalDocs"],
     }));
 
-    const rootProduces = (spec as UnknownObj)._rootProduces as string[] | undefined || [];
-    const rootConsumes = (spec as UnknownObj)._rootConsumes as string[] | undefined || [];
+    const rootProduces = ((spec as UnknownObj)._rootProduces as string[] | undefined) || [];
+    const rootConsumes = ((spec as UnknownObj)._rootConsumes as string[] | undefined) || [];
 
-    const endpoints = mapEndpoints(
-      (spec.paths as UnknownObj) || {},
-      rootProduces,
-      rootConsumes,
-    );
+    const endpoints = mapEndpoints((spec.paths as UnknownObj) || {}, rootProduces, rootConsumes);
 
     const schemas: Record<string, SchemaIR> = {};
     if (components.schemas) {

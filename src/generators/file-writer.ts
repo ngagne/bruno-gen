@@ -27,10 +27,7 @@ async function ensureDir(dirPath: string): Promise<void> {
  * @param outputPath - The final output path
  * @returns Result indicating success or failure
  */
-async function writeBruFile(
-  content: string,
-  outputPath: string
-): Promise<WriteResult> {
+async function writeBruFile(content: string, outputPath: string): Promise<WriteResult> {
   try {
     // Ensure parent directory exists
     const parentDir = dirname(outputPath);

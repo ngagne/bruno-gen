@@ -18,6 +18,8 @@ interface GenerateOptions {
   force?: boolean;
   /** Grouping strategy: 'tag' | 'path' | 'flat'. Default: 'tag'. */
   grouping?: "tag" | "path" | "flat";
+  /** Generate post-response test assertions. */
+  generateTests?: boolean;
 }
 
 interface GenerateResult {
@@ -32,10 +34,7 @@ interface GenerateResult {
  * @param options - Generation options
  * @returns Result with files written and any warnings
  */
-async function generate(
-  ir: CollectionIR,
-  options: GenerateOptions
-): Promise<GenerateResult> {
+async function generate(ir: CollectionIR, options: GenerateOptions): Promise<GenerateResult> {
   const filesWritten: string[] = [];
   const warnings: string[] = [];
   const usedFilenames = new Set<string>();
@@ -65,20 +64,30 @@ async function generate(
     }
 
     // Step 4: Generate folder groups and request files
-    const folderGroups = generateFolderGroups(ir);
+    const folderGroups = generateFolderGroups(ir, { format: options.grouping });
 
     for (const group of folderGroups) {
-      // Create folder directory
-      const folderDir = `${options.outputDir}/${group.folderName}`;
-      await prepareOutputDir(folderDir); // Creates environments/ subfolder (harmless)
+      // Determine the directory for request files
+      // In flat mode, files go directly in outputDir
+      const folderDir = group.folderName
+        ? `${options.outputDir}/${group.folderName}`
+        : options.outputDir;
 
-      // Write folder.bru
-      const folderBruPath = `${folderDir}/folder.bru`;
-      const folderResult = await writeBruFile(group.folderBru, folderBruPath);
-      if (folderResult.success) {
-        filesWritten.push(folderBruPath);
-      } else {
-        warnings.push(`Failed to write folder.bru for ${group.displayName}: ${folderResult.error}`);
+      if (group.folderName) {
+        await prepareOutputDir(folderDir);
+      }
+
+      // Write folder.bru (skip in flat mode)
+      if (group.folderBru) {
+        const folderBruPath = `${folderDir}/folder.bru`;
+        const folderResult = await writeBruFile(group.folderBru, folderBruPath);
+        if (folderResult.success) {
+          filesWritten.push(folderBruPath);
+        } else {
+          warnings.push(
+            `Failed to write folder.bru for ${group.displayName}: ${folderResult.error}`,
+          );
+        }
       }
 
       // Write request files for each endpoint in this folder
@@ -89,6 +98,7 @@ async function generate(
         const requestBru = generateRequestBru(endpoint, ir, {
           seq: i + 1,
           baseUrl: "{{baseUrl}}",
+          generateTests: options.generateTests,
         });
 
         // Generate safe filename

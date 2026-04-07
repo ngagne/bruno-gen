@@ -78,7 +78,7 @@ function generatePostResponseVars(responses: ResponseIR[]): string {
 
   // Find first JSON media type
   const jsonMediaType = Object.values(successResponse.content).find(
-    (mt) => mt.schema && (mt.schema.type === "object" || mt.example)
+    (mt) => mt.schema && (mt.schema.type === "object" || mt.example),
   );
 
   if (!jsonMediaType || !jsonMediaType.schema) {

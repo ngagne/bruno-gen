@@ -53,7 +53,10 @@ describe("auth-generator", () => {
     });
 
     it("generates OIDC auth block with placeholder URLs", () => {
-      const scheme: SecurityScheme = { type: "openIdConnect", openIdConnectUrl: "https://auth.example.com/.well-known/openid-configuration" };
+      const scheme: SecurityScheme = {
+        type: "openIdConnect",
+        openIdConnectUrl: "https://auth.example.com/.well-known/openid-configuration",
+      };
       const result = generateAuthBlock(scheme, "oidc");
       expect(result).toContain("auth:oauth2");
       expect(result).toContain("authorization_url: {{oidcAuthorizationUrl}}");
@@ -74,7 +77,9 @@ describe("auth-generator", () => {
     });
 
     it("returns apikey for apiKey scheme", () => {
-      const schemes = { apiKeyAuth: { type: "apiKey", name: "X-API-Key", in: "header" } as SecurityScheme };
+      const schemes = {
+        apiKeyAuth: { type: "apiKey", name: "X-API-Key", in: "header" } as SecurityScheme,
+      };
       expect(generateAuthMode(schemes)).toBe("apikey");
     });
 

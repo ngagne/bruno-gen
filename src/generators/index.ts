@@ -10,7 +10,11 @@ export type { GenerateOptions, GenerateResult } from "./orchestrator.js";
 export { generateCollectionBru } from "./collection-generator.js";
 export type { CollectionBruOptions } from "./collection-generator.js";
 
-export { generateEnvironmentBru, extractBaseUrl, generateAuthVars } from "./environment-generator.js";
+export {
+  generateEnvironmentBru,
+  extractBaseUrl,
+  generateAuthVars,
+} from "./environment-generator.js";
 
 export { generateFolderGroups, generateFolderBru } from "./folder-generator.js";
 export type { FolderGroup } from "./folder-generator.js";

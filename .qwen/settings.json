@@ -15,7 +15,8 @@
       "Bash(node *)",
       "Bash(cat *)",
       "Bash(npx *)",
-      "Bash(rm *)"
+      "Bash(rm *)",
+      "Bash(echo *)"
     ]
   },
   "$version": 3

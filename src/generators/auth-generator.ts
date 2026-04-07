@@ -169,7 +169,7 @@ function generateAuthMode(schemes: Record<string, SecurityScheme>): string {
  */
 function getEndpointAuthMode(
   endpointSecurity: SecurityRequirement[] | undefined,
-  collectionSecurity: SecurityRequirement[]
+  collectionSecurity: SecurityRequirement[],
 ): string {
   // Empty array means no auth for this endpoint
   if (endpointSecurity !== undefined && endpointSecurity.length === 0) {

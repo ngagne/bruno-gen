@@ -21,7 +21,9 @@ describe("example-generator", () => {
 
     it("generates string examples from format", () => {
       expect(generateExample({ type: "string", format: "email" })).toBe("user@example.com");
-      expect(generateExample({ type: "string", format: "uuid" })).toBe("00000000-0000-0000-0000-000000000000");
+      expect(generateExample({ type: "string", format: "uuid" })).toBe(
+        "00000000-0000-0000-0000-000000000000",
+      );
       expect(generateExample({ type: "string", format: "date-time" })).toBe("2026-01-01T00:00:00Z");
       expect(generateExample({ type: "string", format: "uri" })).toBe("https://example.com");
     });

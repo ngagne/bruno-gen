@@ -15,7 +15,9 @@ export function mapGraphQLEndpoints(schema: GraphQLSchema): EndpointIR[] {
   if (queryType) {
     const fields = queryType.getFields();
     for (const [name, field] of Object.entries(fields)) {
-      endpoints.push(createEndpointFromField(name, field as GraphQLField<unknown, unknown>, "query"));
+      endpoints.push(
+        createEndpointFromField(name, field as GraphQLField<unknown, unknown>, "query"),
+      );
     }
   }
 
@@ -24,7 +26,9 @@ export function mapGraphQLEndpoints(schema: GraphQLSchema): EndpointIR[] {
   if (mutationType) {
     const fields = mutationType.getFields();
     for (const [name, field] of Object.entries(fields)) {
-      endpoints.push(createEndpointFromField(name, field as GraphQLField<unknown, unknown>, "mutation"));
+      endpoints.push(
+        createEndpointFromField(name, field as GraphQLField<unknown, unknown>, "mutation"),
+      );
     }
   }
 

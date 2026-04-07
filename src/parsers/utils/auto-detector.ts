@@ -52,7 +52,8 @@ export function detectFormat(data: Record<string, unknown>, filePath?: string): 
 function isGraphQLSdl(data: Record<string, unknown>): boolean {
   // If data is a string (raw SDL content), check for GraphQL syntax
   if (typeof data === "string" || typeof (data as Record<string, unknown>)._raw === "string") {
-    const content = typeof data === "string" ? data : (data as Record<string, unknown>)._raw as string;
+    const content =
+      typeof data === "string" ? data : ((data as Record<string, unknown>)._raw as string);
     return looksLikeGraphQLSdl(content);
   }
 

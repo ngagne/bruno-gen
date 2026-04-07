@@ -45,7 +45,9 @@ describe("DirectoryParser", () => {
     );
     fs.writeFileSync(path.join(testDir, "test.graphql"), "type ShouldNotAppearTest { id: ID! }");
 
-    const files = (parser as unknown as { findGraphqlFiles: (dir: string) => string[] }).findGraphqlFiles(tmpDir);
+    const files = (
+      parser as unknown as { findGraphqlFiles: (dir: string) => string[] }
+    ).findGraphqlFiles(tmpDir);
     // Only the files from the previous test should be found, not the ones in node_modules/__tests__
     const hasSkippedType = files.some((f: string) =>
       fs.readFileSync(f, "utf-8").includes("ShouldNotAppear"),

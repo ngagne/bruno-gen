@@ -10,21 +10,44 @@ import { formatBlock } from "./bru-serializer.js";
 interface FolderGroup {
   /** Folder directory name (sanitized tag name). */
   folderName: string;
-  /** folder.bru content. */
-  folderBru: string;
+  /** folder.bru content (null in flat mode). */
+  folderBru: string | null;
   /** Endpoints belonging to this folder. */
   endpoints: EndpointIR[];
   /** Display name for the folder. */
   displayName: string;
 }
 
+interface FolderOptions {
+  /** Grouping format: 'tag' (default), 'path', or 'flat'. */
+  format?: "tag" | "path" | "flat";
+}
+
 /**
- * Group endpoints by their primary tag and generate folder.bru for each.
+ * Group endpoints by their grouping strategy and generate folder.bru for each.
  * @param ir - The collection IR
+ * @param options - Grouping options
  * @returns Array of folder groups with endpoints
  */
-function generateFolderGroups(ir: CollectionIR): FolderGroup[] {
-  // Group endpoints by first tag
+function generateFolderGroups(ir: CollectionIR, options?: FolderOptions): FolderGroup[] {
+  const format = options?.format ?? "tag";
+
+  if (format === "flat") {
+    return generateFlatGroups(ir);
+  }
+
+  if (format === "path") {
+    return generatePathGroups(ir);
+  }
+
+  // Default: tag-based grouping
+  return generateTagGroups(ir);
+}
+
+/**
+ * Group endpoints by their primary tag.
+ */
+function generateTagGroups(ir: CollectionIR): FolderGroup[] {
   const tagMap = new Map<string, EndpointIR[]>();
   const ungrouped: EndpointIR[] = [];
 
@@ -42,7 +65,6 @@ function generateFolderGroups(ir: CollectionIR): FolderGroup[] {
   const groups: FolderGroup[] = [];
   let sequence = 1;
 
-  // Generate groups from tags
   // Sort tags by their appearance in the tags array for consistent ordering
   const sortedTags = ir.tags ? ir.tags.map((t) => t.name) : Array.from(tagMap.keys());
 
@@ -73,6 +95,53 @@ function generateFolderGroups(ir: CollectionIR): FolderGroup[] {
   }
 
   return groups;
+}
+
+/**
+ * Group endpoints by first URL path segment.
+ */
+function generatePathGroups(ir: CollectionIR): FolderGroup[] {
+  const pathMap = new Map<string, EndpointIR[]>();
+
+  for (const endpoint of ir.endpoints) {
+    // Extract first path segment: /users/123/posts → users
+    const segments = endpoint.path.split("/").filter(Boolean);
+    const firstSegment = segments[0] ?? "root";
+    const existing = pathMap.get(firstSegment) || [];
+    existing.push(endpoint);
+    pathMap.set(firstSegment, existing);
+  }
+
+  const groups: FolderGroup[] = [];
+  let sequence = 1;
+
+  for (const [segment, endpoints] of pathMap) {
+    const folderName = sanitizeFolderName(segment);
+    const folderBru = generateFolderBru(segment, sequence);
+    groups.push({
+      folderName,
+      folderBru,
+      endpoints,
+      displayName: segment,
+    });
+    sequence++;
+  }
+
+  return groups;
+}
+
+/**
+ * Flat grouping — no folders, all endpoints at root.
+ */
+function generateFlatGroups(ir: CollectionIR): FolderGroup[] {
+  return [
+    {
+      folderName: "",
+      folderBru: null,
+      endpoints: ir.endpoints,
+      displayName: "root",
+    },
+  ];
 }
 
 /**

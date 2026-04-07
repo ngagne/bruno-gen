@@ -89,12 +89,7 @@ Plans:
   7. Warnings for unsupported features displayed without halting generation (exit 0)
 
 Plans:
-- [ ] 04-01: CLI entry point — commander setup, argument parsing, input/output validation
-- [ ] 04-02: CLI flags — --format (tag/path/flat), --tests, --dry-run, --config implementation
-- [ ] 04-03: Output formatting — chalk for colors, ora for spinners (TTY detection), cli-table3 for summaries
-- [ ] 04-04: Exit code handling — success (0), error (1), warning output without halting
-- [ ] 04-05: Test assertion generator — post-response scripts for status code and schema validation
-- [ ] 04-06: Test assertion integration — wire test generation into request generator via --tests flag
+- [x] 04-PLAN: Phase 4 plan created (6 waves: CLI entry, output formatting, exit codes, format flag, test generator, test wiring)
 
 ### Phase 5: Library API, Config & Plugins
 **Goal**: Programmatic API (CJS+ESM), config file discovery and merging, and plugin system with transformIR and preOutput hooks.

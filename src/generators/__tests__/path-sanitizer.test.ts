@@ -6,7 +6,9 @@ describe("path-sanitizer", () => {
   describe("sanitizeName", () => {
     it("replaces special characters with dashes", () => {
       expect(sanitizeName("GET /users/{id}")).toBe("get-users-id");
-      expect(sanitizeName("POST /oauth/token?grant_type=client_credentials")).toBe("post-oauth-token-grant-type-client-credentials");
+      expect(sanitizeName("POST /oauth/token?grant_type=client_credentials")).toBe(
+        "post-oauth-token-grant-type-client-credentials",
+      );
     });
 
     it("collapses multiple dasheses to single dash", () => {

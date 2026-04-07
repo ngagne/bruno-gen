@@ -55,7 +55,10 @@ function generateCollectionBru(ir: CollectionIR, options?: CollectionBruOptions)
 /**
  * Generate auth config block for a specific security scheme.
  */
-function generateAuthConfigBlock(scheme: CollectionIR["securitySchemes"][string], name: string): string | null {
+function generateAuthConfigBlock(
+  scheme: CollectionIR["securitySchemes"][string],
+  name: string,
+): string | null {
   switch (scheme.type) {
     case "http":
       if (scheme.scheme === "bearer") {

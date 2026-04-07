@@ -10,25 +10,26 @@ See: .planning/PROJECT.md (updated 2026-04-06 after initialization)
 ## Current State
 
 **Milestone:** v1.0 (greenfield)
-**Active phase:** Phase 3: Bruno Generator Layer
-**Phase status:** ✓ Complete
+**Active phase:** Phase 5: Library API, Config & Plugins
+**Phase status:** Ready for Phase 5
 
 ### Progress
 
 ```
-Progress: ██████░░░░ 50%
+Progress: █████████░ 77%
 ```
 
 **Phase 1: Project Scaffold & IR Types** — 4/4 plans complete ✓
 **Phase 2: Parser Layer** — 6/6 plans complete ✓
 **Phase 3: Bruno Generator Layer** — 7/7 plans complete ✓
-**Plans:** 33 total across 6 phases (17 complete)
+**Phase 4: CLI Interface & Test Assertions** — 6/6 waves complete ✓
+**Plans:** 33 total across 6 phases (24 complete)
 
 ### Requirements
 
 - v1: 64 requirements, 64 mapped to phases, 0 unmapped ✓
-- Validated: 29 (PARSE-01 through PARSE-10, REQ-01 through REQ-10, AUTH-01 through AUTH-05, ENV-01 through ENV-04)
-- Active: 35
+- Validated: 43 (PARSE-01 through PARSE-10, REQ-01 through REQ-10, AUTH-01 through AUTH-05, ENV-01 through ENV-04, CLI-01 through CLI-10, TEST-01 through TEST-04)
+- Active: 21
 - Out of Scope: 8
 
 ### Recent Activity
@@ -51,7 +52,6 @@ Progress: ██████░░░░ 50%
 
 ### Recent Activity (cont.)
 
-- 2026-04-06: Phase 3 discussed — 21 decisions captured in 03-CONTEXT.md (grouping, examples, auth, collection vars)
 - 2026-04-06: Phase 3 executed — all 7 plans complete, 98 tests passing, build/lint/format clean
   - 03-01: Output layer — file-writer.ts with atomic writes, directory structure creation
   - 03-02: Collection generator — collection-generator.ts with meta, auth, docs blocks
@@ -63,9 +63,20 @@ Progress: ██████░░░░ 50%
   - Supporting modules: bru-serializer.ts, example-generator.ts, path-sanitizer.ts
   - Integration tests verify full generation flow from IR to .bru files
 
+- 2026-04-06: Phase 4 discussed — 19 decisions captured in 04-CONTEXT.md (CLI architecture, test assertion design, flags, output formatting, exit codes)
+- 2026-04-06: Phase 4 planned — 6 waves in 04-PLAN.md (CLI entry, output formatting, exit codes, format flag, test generator, test wiring)
+- 2026-04-06: Phase 4 executed — all 6 waves complete, 150 tests passing, build/lint/format clean
+  - Wave 1: CLI entry point (src/cli.ts) with Commander, tsup dual entry, dependencies (commander, chalk, ora, cli-table3)
+  - Wave 2: TTY-aware output (src/cli/output.ts) — isInteractive(), spinner no-op, table formatting, dry-run tree
+  - Wave 3: Exit codes — spec file not found (exit 1), validation errors (exit 1), warnings (exit 0), verbose stack traces
+  - Wave 4: --format flag — tag/path/flat grouping in folder-generator.ts, wired through orchestrator
+  - Wave 5: Test generator (src/generators/test-generator.ts) — 3-tier assertions (status code, required fields, example values)
+  - Wave 6: --tests flag wiring — orchestrator → request-generator → test-generator → post-response blocks in .bru files
+  - New tests: cli.test.ts, output.test.ts, test-generator.test.ts, request-generator.test.ts, folder-generator.test.ts
+
 ### Next Action
 
-Run `/808-discuss-phase 4` to discuss Phase 4 (CLI Interface & Test Assertions), then `/808-plan-phase 4` to plan it.
+Run `/808-execute-phase 5` to execute Phase 5 (Library API, Config & Plugins), then `/808-verify-work` to validate.
 
 ---
-*Last updated: 2026-04-06 after Phase 3 completion*
+*Last updated: 2026-04-06 after Phase 4 execution*

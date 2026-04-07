@@ -4,20 +4,19 @@
  */
 
 import type { EndpointIR, CollectionIR, ParameterIR } from "../ir/index.js";
-import {
-  formatBlock,
-  formatBlockWithContent,
-  serializeValue,
-} from "./bru-serializer.js";
+import { formatBlock, formatBlockWithContent, serializeValue } from "./bru-serializer.js";
 import { generateExample } from "./example-generator.js";
 import { generateAuthBlock, getEndpointAuthMode } from "./auth-generator.js";
 import { generateResponseDocs, generatePostResponseVars } from "./response-examples.js";
+import { generatePostResponseTests } from "./test-generator.js";
 
 interface RequestBruOptions {
   /** Request ordering sequence number. */
   seq?: number;
   /** Base URL template to use (default: '{{baseUrl}}'). */
   baseUrl?: string;
+  /** Generate post-response test assertions. */
+  generateTests?: boolean;
 }
 
 /**
@@ -30,7 +29,7 @@ interface RequestBruOptions {
 function generateRequestBru(
   endpoint: EndpointIR,
   collection: CollectionIR,
-  options?: RequestBruOptions
+  options?: RequestBruOptions,
 ): string {
   const seq = options?.seq ?? 1;
   const baseUrl = options?.baseUrl ?? "{{baseUrl}}";
@@ -94,6 +93,14 @@ function generateRequestBru(
     }
   }
 
+  // Post-response test assertions (when --tests flag is used)
+  if (options?.generateTests && endpoint.responses && endpoint.responses.length > 0) {
+    const testsBlock = generatePostResponseTests(endpoint.responses);
+    if (testsBlock) {
+      blocks.push(testsBlock);
+    }
+  }
+
   // Docs block
   const docsContent = generateRequestDocs(endpoint);
   if (docsContent) {
@@ -118,7 +125,10 @@ function generateMethodBlock(endpoint: EndpointIR, baseUrl: string): string {
     const contentTypes = Object.keys(endpoint.requestBody.content);
     if (contentTypes.includes("application/json")) {
       bodyType = "json";
-    } else if (contentTypes.includes("application/graphql") || contentTypes.includes("application/graphql-response+json")) {
+    } else if (
+      contentTypes.includes("application/graphql") ||
+      contentTypes.includes("application/graphql-response+json")
+    ) {
       bodyType = "graphql";
     } else if (contentTypes.includes("application/x-www-form-urlencoded")) {
       bodyType = "form-urlencoded";
@@ -245,10 +255,7 @@ function generateHeaders(endpoint: EndpointIR): string | null {
 /**
  * Generate auth block for this specific request.
  */
-function generateRequestAuthBlock(
-  endpoint: EndpointIR,
-  collection: CollectionIR
-): string | null {
+function generateRequestAuthBlock(endpoint: EndpointIR, collection: CollectionIR): string | null {
   const authMode = getEndpointAuthMode(endpoint.security, collection.defaultSecurity);
 
   if (authMode === "none") {
@@ -350,5 +357,14 @@ function generateSettingsBlock(): string {
   return formatBlock("settings", entries);
 }
 
-export { generateRequestBru, generateMethodBlock, buildUrl, generatePathParams, generateQueryParams, generateHeaders, generateBody, generateRequestDocs };
+export {
+  generateRequestBru,
+  generateMethodBlock,
+  buildUrl,
+  generatePathParams,
+  generateQueryParams,
+  generateHeaders,
+  generateBody,
+  generateRequestDocs,
+};
 export type { RequestBruOptions };

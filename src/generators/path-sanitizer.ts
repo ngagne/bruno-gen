@@ -67,7 +67,7 @@ function sanitizeName(raw: string): string {
  */
 function sanitizeRequestFilename(
   endpoint: EndpointIR,
-  usedNames: Set<string> = new Set<string>()
+  usedNames: Set<string> = new Set<string>(),
 ): string {
   // Try operationId first, fall back to method-path
   const rawName = endpoint.id || `${endpoint.method}-${endpoint.path}`;

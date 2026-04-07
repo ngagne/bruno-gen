@@ -122,7 +122,13 @@ describe("generator integration tests", () => {
     expect(folderContent).toContain("name: users");
 
     // Verify request file was created
-    const requestBruFiles = result.filesWritten.filter((f) => f.endsWith(".bru") && !f.includes("collection.bru") && !f.includes("folder.bru") && !f.includes("default.bru"));
+    const requestBruFiles = result.filesWritten.filter(
+      (f) =>
+        f.endsWith(".bru") &&
+        !f.includes("collection.bru") &&
+        !f.includes("folder.bru") &&
+        !f.includes("default.bru"),
+    );
     expect(requestBruFiles.length).toBeGreaterThan(0);
   });
 
