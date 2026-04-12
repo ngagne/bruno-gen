@@ -336,7 +336,3 @@ Each `.bru` file contains the full request definition — method, URL, parameter
 7. Open a Pull Request
 
 All contributions welcome — bug fixes, new features, docs improvements, and real-world spec validation.
-
-## License
-
-[MIT](LICENSE)
