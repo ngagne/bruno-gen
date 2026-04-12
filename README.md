@@ -1,10 +1,5 @@
 # bruno-gen
 
-[![npm version](https://img.shields.io/npm/v/bruno-gen)](https://www.npmjs.com/package/bruno-gen)
-[![npm downloads](https://img.shields.io/npm/dm/bruno-gen)](https://www.npmjs.com/package/bruno-gen)
-[![license](https://img.shields.io/npm/l/bruno-gen)](LICENSE)
-[![node version](https://img.shields.io/node/v/bruno-gen)](https://nodejs.org)
-
 Convert OpenAPI 3.x, Swagger 2.0, and GraphQL schemas into fully functional Bruno API collections with one command. Available as a CLI tool and a programmatic JavaScript/TypeScript library.
 
 ```bash
