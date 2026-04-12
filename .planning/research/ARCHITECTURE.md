@@ -607,7 +607,7 @@ The library exports two interfaces:
 
 #### Functional API
 ```ts
-import { generate } from "bruno-collection-generator";
+import { generate } from "bruno-gen";
 
 const result = await generate("./openapi.yaml", {
   outputDir: "./bruno-collection",
@@ -619,7 +619,7 @@ const result = await generate("./openapi.yaml", {
 
 #### Fluent Builder API
 ```ts
-import { CollectionBuilder } from "bruno-collection-generator";
+import { CollectionBuilder } from "bruno-gen";
 
 const builder = new CollectionBuilder()
   .fromOpenAPI("./openapi.yaml")
@@ -885,7 +885,7 @@ Output directory with complete Bruno collection
 ## 5. Directory Structure
 
 ```
-bruno-collection-generator/
+bruno-gen/
 ├── src/
 │   ├── index.ts                  # Library entry point (exports generate, CollectionBuilder)
 │   ├── cli.ts                    # CLI entry point (commander)

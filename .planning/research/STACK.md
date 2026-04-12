@@ -523,7 +523,7 @@ vars {
 **`package.json`:**
 ```json
 {
-  "name": "bruno-collection-generator",
+  "name": "bruno-gen",
   "type": "module",
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.js",

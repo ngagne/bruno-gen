@@ -46,7 +46,7 @@ Create a comprehensive `README.md` at the project root. The README must be produ
 
 1. **Header** — Project name, one-line description, npm install command
 2. **Quick Start** — Minimal CLI example that works immediately (3 lines max)
-3. **Installation** — `npm install bruno-collection-generator` with node version requirement
+3. **Installation** — `npm install bruno-gen` with node version requirement
 4. **CLI Reference** — Complete flags table:
    | Flag | Description | Default |
    |------|-------------|---------|
@@ -203,9 +203,9 @@ Also create `scripts/refresh-fixtures.sh` — a shell script that can pull fresh
 </read_first>
 
 Add the following fields to `package.json`:
-- `repository`: `{ "type": "git", "url": "https://github.com/<user>/bruno-collection-generator" }` (placeholder URL — user will replace)
-- `bugs`: `{ "url": "https://github.com/<user>/bruno-collection-generator/issues" }`
-- `homepage`: `https://github.com/<user>/bruno-collection-generator#readme`
+- `repository`: `{ "type": "git", "url": "https://github.com/<user>/bruno-gen" }` (placeholder URL — user will replace)
+- `bugs`: `{ "url": "https://github.com/<user>/bruno-gen/issues" }`
+- `homepage`: `https://github.com/<user>/bruno-gen#readme`
 - `files`: `["dist/", "README.md", "LICENSE"]`
 
 Verify existing fields are correct:

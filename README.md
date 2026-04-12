@@ -1,49 +1,67 @@
-# bruno-collection-generator
+# bruno-gen
 
-Convert OpenAPI 3.x, Swagger 2.0, and GraphQL schemas into fully functional Bruno API collections with one command.
+[![npm version](https://img.shields.io/npm/v/bruno-gen)](https://www.npmjs.com/package/bruno-gen)
+[![npm downloads](https://img.shields.io/npm/dm/bruno-gen)](https://www.npmjs.com/package/bruno-gen)
+[![license](https://img.shields.io/npm/l/bruno-gen)](LICENSE)
+[![node version](https://img.shields.io/node/v/bruno-gen)](https://nodejs.org)
+
+Convert OpenAPI 3.x, Swagger 2.0, and GraphQL schemas into fully functional Bruno API collections with one command. Available as a CLI tool and a programmatic JavaScript/TypeScript library.
 
 ```bash
-npm install bruno-collection-generator
+bruno-gen ./openapi.yaml ./output
 ```
+
+## Features
+
+- **OpenAPI 3.x** — Full support for paths, parameters, request bodies, responses, and examples
+- **Swagger 2.0** — Legacy Swagger specs automatically normalized and converted
+- **GraphQL** — SDL schemas converted to Bruno collections with query/mutation folders
+- **Authentication** — Bearer, Basic, API Key, OAuth2, and OpenID Connect security schemes
+- **Examples** — Preserves spec examples and auto-generates placeholder values from schemas
+- **Folder grouping** — Organize by tags, URL paths, or flat structure
+- **Plugins** — Transform the IR or modify .bru output before writing
+- **Config files** — `brunogen.config.yml` for reproducible, team-shared settings
+- **Dual ESM/CJS** — Works in both `import` and `require` projects
 
 ## Quick Start
 
 ```bash
-# Install
-npm install -g bruno-collection-generator
+# Install globally
+npm install -g bruno-gen
 
-# Generate a Bruno collection from an OpenAPI spec
+# Generate from a spec file
 bruno-gen ./openapi.yaml ./output
 
-# Open the output folder in Bruno — done.
+# Or use npx without installing
+npx bruno-gen ./openapi.yaml ./output
+
+# Open the output folder in Bruno — done
 ```
 
 ## Installation
 
 ```bash
-npm install bruno-collection-generator
-```
-
-**Requires Node.js 24+**. Install globally for CLI access or as a project dependency for programmatic use.
-
-```bash
-# Global install (CLI access)
-npm install -g bruno-collection-generator
+# Global CLI
+npm install -g bruno-gen
 
 # Or as a project dependency
-npm install bruno-collection-generator
+npm install bruno-gen
 ```
 
-## CLI Reference
+**Requires Node.js 24+**.
+
+## CLI Usage
 
 ```bash
 bruno-gen [spec] [output] [options]
 ```
 
+### Options
+
 | Flag | Description | Default |
 |------|-------------|---------|
-| `<spec>` | Path to OpenAPI, Swagger, or GraphQL spec file | (required, or config `spec:`) |
-| `[output]` | Output directory for the Bruno collection | `./bruno-output` or config value |
+| `<spec>` | Path to OpenAPI, Swagger, or GraphQL spec file | _(required)_ |
+| `[output]` | Output directory for the Bruno collection | `./bruno-output` |
 | `--format <tag\|path\|flat>` | Folder grouping strategy | `tag` |
 | `--tests` | Generate post-response test assertions | off |
 | `--dry-run` | Print tree to stdout without writing files | off |
@@ -53,7 +71,7 @@ bruno-gen [spec] [output] [options]
 ### Examples
 
 ```bash
-# OpenAPI spec to Bruno collection (grouped by tag)
+# OpenAPI spec → Bruno collection (grouped by tag)
 bruno-gen ./openapi.yaml ./output
 
 # GraphQL schema with test assertions
@@ -69,10 +87,10 @@ bruno-gen ./openapi.yaml ./output --format path
 bruno-gen --config ./brunogen.config.yaml --tests --verbose
 ```
 
-### Format Strategies
+### Folder Grouping Strategies
 
 - **`tag`** (default) — Groups requests by their OpenAPI tags into Bruno folders
-- **`path`** — Groups requests by their URL path structure (e.g., `/users`, `/users/{id}`)
+- **`path`** — Groups by URL path structure (`/users`, `/users/{id}`, etc.)
 - **`flat`** — All requests in a single folder, no grouping
 
 ## Config File
@@ -92,35 +110,25 @@ force: false                # Overwrite existing output directory
 
 **Merge priority** (lowest → highest): Built-in defaults < config file < CLI flags.
 
-CLI flags always override config file values. For example, `bruno-gen --tests` enables test assertions even if `tests: false` in the config.
-
 ## Library API
 
 Use programmatically in your own scripts. Supports both ESM and CommonJS.
 
-### `generate(ir, options)`
-
-Main generation function. Takes a parsed `CollectionIR` and writes .bru files.
+### Basic Usage
 
 ```ts
-import { generate, parse } from "bruno-collection-generator";
+import { generate, parse } from "bruno-gen";
 
-async function main() {
-  // Parse any supported spec format
-  const ir = await parse("./openapi.yaml");
+const ir = await parse("./openapi.yaml");
 
-  // Generate Bruno collection
-  const result = await generate(ir, {
-    outputDir: "./output",
-    grouping: "tag",       // "tag" | "path" | "flat"
-    generateTests: false,  // Include post-response test assertions
-    force: false,          // Overwrite existing output
-  });
+const result = await generate(ir, {
+  outputDir: "./output",
+  grouping: "tag",       // "tag" | "path" | "flat"
+  generateTests: false,  // Include post-response test assertions
+  force: false,          // Overwrite existing output
+});
 
-  console.log(`Generated ${result.filesWritten.length} files`);
-}
-
-main();
+console.log(`Generated ${result.filesWritten.length} files`);
 ```
 
 ### `parse(input)`
@@ -128,7 +136,7 @@ main();
 Unified spec parser. Accepts file paths to OpenAPI 3.x YAML/JSON, Swagger 2.0, or GraphQL SDL files.
 
 ```ts
-import { parse } from "bruno-collection-generator";
+import { parse } from "bruno-gen";
 
 // OpenAPI 3.x
 const ir = await parse("./openapi.yaml");
@@ -147,14 +155,11 @@ Returns a `CollectionIR` object with normalized endpoints, parameters, security 
 Fluent builder API for chaining configuration and generation.
 
 ```ts
-import { CollectionBuilder } from "bruno-collection-generator";
+import { CollectionBuilder } from "bruno-gen";
 
 // From a spec file
 const result = await CollectionBuilder.fromSpec("./openapi.yaml")
-  .withOptions({
-    grouping: "path",
-    generateTests: true,
-  })
+  .withOptions({ grouping: "path", generateTests: true })
   .withPlugins([myHeaderPlugin])
   .generate("./output");
 
@@ -170,7 +175,7 @@ await builder.withOptions({ grouping: "flat" }).generate("./out-flat");
 Load and merge a config file from the filesystem.
 
 ```ts
-import { loadConfig } from "bruno-collection-generator";
+import { loadConfig } from "bruno-gen";
 
 // Auto-discover config in CWD
 const config = await loadConfig();
@@ -184,7 +189,7 @@ const config = await loadConfig(process.cwd(), "./config/brunogen.yaml");
 Three-layer config merge utility.
 
 ```ts
-import { mergeConfig } from "bruno-collection-generator";
+import { mergeConfig } from "bruno-gen";
 
 const merged = mergeConfig(
   { format: "tag", tests: false },   // Built-in defaults
@@ -197,7 +202,7 @@ const merged = mergeConfig(
 
 ## Plugins
 
-Plugins let you transform the IR before generation or modify .bru content before writing. A plugin is an object with a `name` and `hooks`.
+Plugins let you transform the IR before generation or modify .bru content before writing.
 
 ### Plugin Interface
 
@@ -213,9 +218,7 @@ interface Plugin {
 }
 ```
 
-### Minimal Example (under 10 lines)
-
-Add a custom header to every request:
+### Example: Add a Custom Header
 
 ```ts
 const addHeaderPlugin: Plugin = {
@@ -230,29 +233,24 @@ const addHeaderPlugin: Plugin = {
 };
 ```
 
-### Real-World Example: Auth Header Injection
-
-Inject authentication headers into requests that require them:
+### Example: Auth Header Injection
 
 ```ts
-import type { Plugin } from "bruno-collection-generator";
+import type { Plugin } from "bruno-gen";
 
 const authPlugin: Plugin = {
   name: "auth-header-injector",
   hooks: {
-    transformIR: async (ir) => {
-      // Add a global auth variable to the environment
-      return {
-        ...ir,
-        endpoints: ir.endpoints.map((ep) => ({
-          ...ep,
-          headers: [
-            ...(ep.headers || []),
-            { name: "Authorization", value: "{{apiKey}}", required: true },
-          ],
-        })),
-      };
-    },
+    transformIR: async (ir) => ({
+      ...ir,
+      endpoints: ir.endpoints.map((ep) => ({
+        ...ep,
+        headers: [
+          ...(ep.headers || []),
+          { name: "Authorization", value: "{{apiKey}}", required: true },
+        ],
+      })),
+    }),
   },
 };
 
@@ -260,15 +258,11 @@ const authPlugin: Plugin = {
 await CollectionBuilder.fromSpec("./openapi.yaml")
   .withPlugins([authPlugin])
   .generate("./output");
-
-// Or via config file (brunogen.config.yml):
-// plugins:
-//   - ./plugins/auth-header-injector.js
 ```
 
 ### Using Plugins
 
-**Via CLI config file:**
+**Via config file:**
 ```yaml
 plugins:
   - ./plugins/add-headers.js
@@ -290,6 +284,26 @@ await generate(ir, {
 });
 ```
 
+## Output Structure
+
+The generator produces a complete Bruno collection directory:
+
+```
+output/
+├── bruno.json                    # Bruno collection metadata
+├── collection.bru                # Collection-level config (meta, auth, vars, docs)
+├── environments/
+│   └── default.bru               # Environment variables (auth tokens, etc.)
+├── Weather/                      # Folder per tag (or path segment)
+│   └── getweatherdata.bru        # One .bru file per endpoint
+└── Users/
+    ├── createuser.bru
+    ├── getuser.bru
+    └── updateuser.bru
+```
+
+Each `.bru` file contains the full request definition — method, URL, parameters, headers, body, auth, tests, and docs — ready to use in Bruno.
+
 ## Troubleshooting
 
 ### No output generated
@@ -304,8 +318,8 @@ await generate(ir, {
 
 ### Module not found
 - Ensure you're running **Node.js 24 or higher** (`node --version`)
-- For ESM projects: use `import { generate } from "bruno-collection-generator"`
-- For CommonJS projects: use `const { generate } = require("bruno-collection-generator")`
+- For ESM projects: use `import { generate } from "bruno-gen"`
+- For CommonJS projects: use `const { generate } = require("bruno-gen")`
 
 ### Plugin not loaded
 - Verify the plugin file path is correct (relative to CWD or absolute)
@@ -327,3 +341,7 @@ await generate(ir, {
 7. Open a Pull Request
 
 All contributions welcome — bug fixes, new features, docs improvements, and real-world spec validation.
+
+## License
+
+[MIT](LICENSE)

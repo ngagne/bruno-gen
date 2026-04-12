@@ -1,5 +1,5 @@
 /**
- * CLI entry point for bruno-collection-generator.
+ * CLI entry point for bruno-gen.
  * Commander.js program with all flags and error handling.
  */
 
