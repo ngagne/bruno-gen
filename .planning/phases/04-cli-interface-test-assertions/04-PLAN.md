@@ -17,11 +17,11 @@ CLI-01, CLI-02, CLI-03, CLI-04, CLI-05, CLI-06, CLI-07, CLI-08, CLI-09, CLI-10, 
 
 ## Success Criteria
 
-1. `bruno-gen ./openapi.yaml ./output` generates a complete Bruno collection with exit code 0
-2. `bruno-gen ./schema.graphql ./output --tests` generates collection with post-response test scripts
-3. `bruno-gen ./openapi.yaml ./output --dry-run` prints generated output to stdout without writing files
-4. `bruno-gen ./invalid.yaml ./output` exits with code 1 and reports validation errors
-5. `bruno-gen ./openapi.yaml ./output --format path` groups requests by URL path instead of tag
+1. `gen-bruno ./openapi.yaml ./output` generates a complete Bruno collection with exit code 0
+2. `gen-bruno ./schema.graphql ./output --tests` generates collection with post-response test scripts
+3. `gen-bruno ./openapi.yaml ./output --dry-run` prints generated output to stdout without writing files
+4. `gen-bruno ./invalid.yaml ./output` exits with code 1 and reports validation errors
+5. `gen-bruno ./openapi.yaml ./output --format path` groups requests by URL path instead of tag
 6. Non-TTY output is clean (no spinners, no ANSI colors) for CI/CD compatibility
 7. Warnings for unsupported features displayed without halting generation (exit 0)
 
@@ -46,7 +46,7 @@ Update `tsup.config.ts` to add a second entry point: `src/cli.ts → dist/cli.js
 
 Create `src/cli.ts` with:
 - Commander program definition
-- `.command('bruno-gen')` with positional args `<spec>` and `[output]` (default: `./bruno-output`)
+- `.command('gen-bruno')` with positional args `<spec>` and `[output]` (default: `./bruno-output`)
 - All flag definitions: `--format <tag|path|flat>`, `--tests`, `--dry-run`, `--config <path>`, `--verbose`, `-V/--version`, `-h/--help`
 - `.action()` handler that:
   1. Validates spec path exists (exit 1 if not)
@@ -58,11 +58,11 @@ Create `src/cli.ts` with:
 
 ### Task 1.2: package.json bin field verification
 
-Confirm `package.json` `"bin": { "bruno-gen": "./dist/cli.js" }` is present. Add `"preferGlobal": true` if not already present. Ensure `dist/cli.js` will have proper shebang (`#!/usr/bin/env node`) — tsup can add this via banner config or a wrapper.
+Confirm `package.json` `"bin": { "gen-bruno": "./dist/cli.js" }` is present. Add `"preferGlobal": true` if not already present. Ensure `dist/cli.js` will have proper shebang (`#!/usr/bin/env node`) — tsup can add this via banner config or a wrapper.
 
 **Tests:**
 - Unit test for CLI argument parsing (commander setup) — mock `process.argv`, verify parsed options
-- Integration test: run `bruno-gen` against an existing test fixture spec, verify exit code 0 and output directory created with expected files
+- Integration test: run `gen-bruno` against an existing test fixture spec, verify exit code 0 and output directory created with expected files
 
 ---
 
@@ -102,8 +102,8 @@ Implement in `src/cli.ts` action handler:
 - Warning collection: parsers and generators may return `{ ir, warnings }` or similar. CLI collects warnings and prints them in summary. Exit code stays 0 if only warnings present.
 
 **Tests:**
-- Integration test: run `bruno-gen ./nonexistent.yaml ./out` → exit code 1, stderr contains "Spec file not found"
-- Integration test: run `bruno-gen ./invalid.yaml ./out` (malformed spec) → exit code 1, stderr contains validation error
+- Integration test: run `gen-bruno ./nonexistent.yaml ./out` → exit code 1, stderr contains "Spec file not found"
+- Integration test: run `gen-bruno ./invalid.yaml ./out` (malformed spec) → exit code 1, stderr contains validation error
 - Integration test: run against valid spec with a known warning (e.g., unsupported security scheme) → exit code 0, warning printed
 
 ---
@@ -122,8 +122,8 @@ Wire the `--format` flag from CLI through `generate()` orchestrator options down
 **Tests:**
 - Unit test: folder generator with `format: 'path'` produces correct folder structure for a multi-path spec
 - Unit test: folder generator with `format: 'flat'` produces no folder.bru files, all requests at root
-- Integration test: `bruno-gen spec.yaml ./out --format path` → verify folder structure matches path grouping
-- Integration test: `bruno-gen spec.yaml ./out --format flat` → verify no subdirectories created
+- Integration test: `gen-bruno spec.yaml ./out --format path` → verify folder structure matches path grouping
+- Integration test: `gen-bruno spec.yaml ./out --format flat` → verify no subdirectories created
 
 ---
 
@@ -167,16 +167,16 @@ Create `src/generators/test-generator.ts`:
 4. Update CLI action handler: pass `generateTests: opts.tests` (from `--tests` flag) through to `generate()`
 
 **Tests:**
-- Integration test: `bruno-gen spec.yaml ./out --tests` → verify each request .bru file contains `post-response` block
-- Integration test: `bruno-gen spec.yaml ./out` (no `--tests`) → verify NO `post-response` blocks in any .bru file (TEST-04)
-- Integration test: `bruno-gen spec.yaml ./out --tests --dry-run` → verify dry-run output includes test block content
+- Integration test: `gen-bruno spec.yaml ./out --tests` → verify each request .bru file contains `post-response` block
+- Integration test: `gen-bruno spec.yaml ./out` (no `--tests`) → verify NO `post-response` blocks in any .bru file (TEST-04)
+- Integration test: `gen-bruno spec.yaml ./out --tests --dry-run` → verify dry-run output includes test block content
 - Golden file test: generate with `--tests` against a known spec, compare output .bru files to expected fixtures
 
 ---
 
 ## Verification Checklist
 
-- [ ] CLI-01: `bruno-gen ./openapi.yaml ./output` works with exit code 0
+- [ ] CLI-01: `gen-bruno ./openapi.yaml ./output` works with exit code 0
 - [ ] CLI-02: Output directory argument works (positional `[output]`)
 - [ ] CLI-03: `--format tag|path|flat` all produce different folder structures
 - [ ] CLI-04: `--tests` generates post-response blocks

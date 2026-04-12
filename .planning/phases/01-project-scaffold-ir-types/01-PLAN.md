@@ -24,13 +24,13 @@ Set up the complete project scaffolding: package.json, TypeScript config, toolin
 **Autonomous:** true
 
 <read_first>
-- `/Users/nickgagne/Development/bruno-gen/.planning/phases/01-project-scaffold-ir-types/1-CONTEXT.md` — User decisions (ESM-first, tsup, Vitest, flat config, full IR)
-- `/Users/nickgagne/Development/bruno-gen/.planning/phases/01-project-scaffold-ir-types/01-RESEARCH.md` — Technical research with specific versions and configs
-- `/Users/nickgagne/Development/bruno-gen/.planning/PROJECT.md` — Project context and constraints
+- `/Users/nickgagne/Development/gen-bruno/.planning/phases/01-project-scaffold-ir-types/1-CONTEXT.md` — User decisions (ESM-first, tsup, Vitest, flat config, full IR)
+- `/Users/nickgagne/Development/gen-bruno/.planning/phases/01-project-scaffold-ir-types/01-RESEARCH.md` — Technical research with specific versions and configs
+- `/Users/nickgagne/Development/gen-bruno/.planning/PROJECT.md` — Project context and constraints
 </read_first>
 
 <acceptance_criteria>
-- `package.json` exists with `"type": "module"`, `"name": "bruno-gen"`, `"engines": { "node": ">=24" }`
+- `package.json` exists with `"type": "module"`, `"name": "gen-bruno"`, `"engines": { "node": ">=24" }`
 - `package.json` has `exports` field mapping `.` to ESM (`./dist/index.js`) and CJS (`./dist/index.cjs`) with types
 - `package.json` has `bin` field pointing to `./dist/cli.js` (ESM)
 - `package.json` scripts: `build` (tsup), `test` (vitest run), `test:coverage` (vitest run --coverage), `lint` (eslint src/), `lint:fix` (eslint src/ --fix), `format` (prettier --write src/), `format:check` (prettier --check src/)
@@ -57,7 +57,7 @@ Set up the complete project scaffolding: package.json, TypeScript config, toolin
 <acceptance_criteria>
 - `package.json` contains `"type": "module"`
 - `package.json` contains `"exports"` with import/require maps
-- `package.json` contains `"bin": { "bruno-gen": "./dist/cli.js" }`
+- `package.json` contains `"bin": { "gen-bruno": "./dist/cli.js" }`
 - `tsconfig.json` contains `"rootDir": "./src"`
 - `tsconfig.json` contains `"types": ["node"]`
 - `tsconfig.test.json` contains `"extends": "./tsconfig.json"`
@@ -125,9 +125,9 @@ Set up the complete project scaffolding: package.json, TypeScript config, toolin
 **Autonomous:** true
 
 <read_first>
-- `/Users/nickgagne/Development/bruno-gen/.planning/phases/01-project-scaffold-ir-types/1-CONTEXT.md` — User decisions (flat config, Vitest)
-- `/Users/nickgagne/Development/bruno-gen/.planning/phases/01-project-scaffold-ir-types/01-RESEARCH.md` §3, §4, §5 — Vitest, ESLint, Prettier configs
-- `/Users/nickgagne/Development/bruno-gen/.planning/PROJECT.md` — Code quality constraints
+- `/Users/nickgagne/Development/gen-bruno/.planning/phases/01-project-scaffold-ir-types/1-CONTEXT.md` — User decisions (flat config, Vitest)
+- `/Users/nickgagne/Development/gen-bruno/.planning/phases/01-project-scaffold-ir-types/01-RESEARCH.md` §3, §4, §5 — Vitest, ESLint, Prettier configs
+- `/Users/nickgagne/Development/gen-bruno/.planning/PROJECT.md` — Code quality constraints
 </read_first>
 
 <acceptance_criteria>
@@ -199,9 +199,9 @@ Set up the complete project scaffolding: package.json, TypeScript config, toolin
 **Autonomous:** true
 
 <read_first>
-- `/Users/nickgagne/Development/bruno-gen/.planning/phases/01-project-scaffold-ir-types/1-CONTEXT.md` — User decisions (full IR upfront, version-agnostic, ValidationError with locations)
-- `/Users/nickgagne/Development/bruno-gen/.planning/phases/01-project-scaffold-ir-types/01-RESEARCH.md` §7, §9 — Directory structure, ValidationError type
-- `/Users/nickgagne/Development/bruno-gen/.planning/research/ARCHITECTURE.md` §2.2 — Complete IR type definitions
+- `/Users/nickgagne/Development/gen-bruno/.planning/phases/01-project-scaffold-ir-types/1-CONTEXT.md` — User decisions (full IR upfront, version-agnostic, ValidationError with locations)
+- `/Users/nickgagne/Development/gen-bruno/.planning/phases/01-project-scaffold-ir-types/01-RESEARCH.md` §7, §9 — Directory structure, ValidationError type
+- `/Users/nickgagne/Development/gen-bruno/.planning/research/ARCHITECTURE.md` §2.2 — Complete IR type definitions
 </read_first>
 
 <acceptance_criteria>
@@ -321,8 +321,8 @@ Set up the complete project scaffolding: package.json, TypeScript config, toolin
 **Autonomous:** true
 
 <read_first>
-- `/Users/nickgagne/Development/bruno-gen/.planning/phases/01-project-scaffold-ir-types/01-RESEARCH.md` §8 — GitHub Actions CI config
-- `/Users/nickgagne/Development/bruno-gen/.planning/ROADMAP.md` — Phase 1 success criteria
+- `/Users/nickgagne/Development/gen-bruno/.planning/phases/01-project-scaffold-ir-types/01-RESEARCH.md` §8 — GitHub Actions CI config
+- `/Users/nickgagne/Development/gen-bruno/.planning/ROADMAP.md` — Phase 1 success criteria
 </read_first>
 
 <acceptance_criteria>

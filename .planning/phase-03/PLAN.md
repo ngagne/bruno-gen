@@ -790,8 +790,8 @@ export type { GenerateOptions, GenerateResult } from './orchestrator.js';
 
 Usage:
 ```typescript
-import { parse } from 'bruno-gen';
-import { generate } from 'bruno-gen/generators';
+import { parse } from 'gen-bruno';
+import { generate } from 'gen-bruno/generators';
 
 const ir = await parse('./openapi.yaml');
 const result = await generate(ir, { outputDir: './output' });

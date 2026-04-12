@@ -1,5 +1,5 @@
 // Library entry point — re-exports all public IR types, parser API, and generator API.
-// Consumers: import { CollectionIR, generate } from "bruno-gen";
+// Consumers: import { CollectionIR, generate } from "gen-bruno";
 
 export type {
   CollectionIR,

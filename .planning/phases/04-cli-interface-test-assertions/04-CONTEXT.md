@@ -23,7 +23,7 @@ Build the Commander.js CLI entry point (`src/cli.ts`) that orchestrates the exis
 ### CLI Architecture
 - **D-01: Hybrid CLI** — Default mode is thin: parse spec → call `generate()` → print summary. `--verbose` mode breaks into step-by-step orchestration (detect format, load spec, parse, validate, generate files, summary) with progress reporting
 - **D-02: Commander.js** — CLI framework. Already specified in ROADMAP; supports subcommands for future phases (`brunogen validate`, `brunogen init`)
-- **D-03: Entry point** — `src/cli.ts` added to `tsup.config.ts` entry array to produce `dist/cli.js` (matching existing `package.json` `"bin"` declaration for `bruno-gen`)
+- **D-03: Entry point** — `src/cli.ts` added to `tsup.config.ts` entry array to produce `dist/cli.js` (matching existing `package.json` `"bin"` declaration for `gen-bruno`)
 
 ### Test Assertion Generation
 - **D-04: Inline Bruno `post-response` blocks only** — Tests embedded in `.bru` files, run inside Bruno's test runner. No separate CI test files for v1
@@ -83,7 +83,7 @@ Build the Commander.js CLI entry point (`src/cli.ts`) that orchestrates the exis
 - `.planning/ROADMAP.md` — Phase 4 goals and success criteria
 
 ### Prior Decisions
-- `.planning/phases/03-bruno-generator-layer/03-CONTEXT.md` — D-01 through D-21 (generator layer decisions that CLI builds on)
+- `.planning/phases/03-gen-brunoerator-layer/03-CONTEXT.md` — D-01 through D-21 (generator layer decisions that CLI builds on)
 - `.planning/phases/01-project-scaffold-ir-types/1-CONTEXT.md` — D-08 (full IR type scope)
 
 </canonical_refs>
@@ -111,7 +111,7 @@ Build the Commander.js CLI entry point (`src/cli.ts`) that orchestrates the exis
 
 ### Build Pipeline
 - `tsup.config.ts` — currently single entry `src/index.ts`. Needs `src/cli.ts` added for `dist/cli.js`
-- `package.json` — `"bin": { "bruno-gen": "./dist/cli.js" }` already declared
+- `package.json` — `"bin": { "gen-bruno": "./dist/cli.js" }` already declared
 - `"type": "module"` — ESM package
 
 ### Dependencies to Add

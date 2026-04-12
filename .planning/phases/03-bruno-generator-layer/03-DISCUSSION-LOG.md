@@ -4,7 +4,7 @@
 > Decisions are captured in CONTEXT.md — this log preserves the alternatives considered.
 
 **Date:** 2026-04-06
-**Phase:** 03-bruno-generator-layer
+**Phase:** 03-gen-brunoerator-layer
 **Areas discussed:** Output structure & grouping, Request body & example generation, Auth handler implementation, Environment variable strategy
 
 ---

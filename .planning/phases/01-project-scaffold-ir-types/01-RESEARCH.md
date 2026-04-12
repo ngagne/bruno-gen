@@ -91,7 +91,7 @@ export default defineConfig({
     }
   },
   "bin": {
-    "bruno-gen": "./dist/cli.js"
+    "gen-bruno": "./dist/cli.js"
   }
 }
 ```
@@ -362,7 +362,7 @@ This is needed because the main tsconfig excludes test files and doesn't include
 ### Recommended Layout
 
 ```
-bruno-gen/
+gen-bruno/
 ├── .github/
 │   └── workflows/
 │       └── ci.yml
@@ -401,7 +401,7 @@ bruno-gen/
 
 - **`src/ir/`** as a dedicated directory — IR types are the core contract shared by all phases. Keeping them in one place makes them easy to import (`from "../ir"` or from the library entry point once exported).
 - **Split IR types by domain** (collection, endpoint, schema, security, etc.) rather than a single massive file. Each file is focused and testable.
-- **`src/index.ts`** re-exports all public IR types so consumers can import from the package root: `import { CollectionIR } from "bruno-gen"`.
+- **`src/index.ts`** re-exports all public IR types so consumers can import from the package root: `import { CollectionIR } from "gen-bruno"`.
 - **`src/cli/`** is deferred to Phase 4. The CLI is ESM-only and should be physically separated from the library core to prevent ESM-only dependencies from leaking into the CJS build.
 - **`test/` at root** (not `src/__tests__/`) — keeps test fixtures and golden files separate from source. Vitest's `include` pattern handles discovery.
 - **Separate `tsconfig.test.json`** — extends the base config but adds vitest globals to `types` and includes test files.

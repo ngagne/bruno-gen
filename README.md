@@ -1,9 +1,9 @@
-# bruno-gen
+# gen-bruno
 
 Convert OpenAPI 3.x, Swagger 2.0, and GraphQL schemas into fully functional Bruno API collections with one command. Available as a CLI tool and a programmatic JavaScript/TypeScript library.
 
 ```bash
-bruno-gen ./openapi.yaml ./output
+gen-bruno ./openapi.yaml ./output
 ```
 
 ## Features
@@ -22,13 +22,13 @@ bruno-gen ./openapi.yaml ./output
 
 ```bash
 # Install globally
-npm install -g bruno-gen
+npm install -g gen-bruno
 
 # Generate from a spec file
-bruno-gen ./openapi.yaml ./output
+gen-bruno ./openapi.yaml ./output
 
 # Or use npx without installing
-npx bruno-gen ./openapi.yaml ./output
+npx gen-bruno ./openapi.yaml ./output
 
 # Open the output folder in Bruno — done
 ```
@@ -37,10 +37,10 @@ npx bruno-gen ./openapi.yaml ./output
 
 ```bash
 # Global CLI
-npm install -g bruno-gen
+npm install -g gen-bruno
 
 # Or as a project dependency
-npm install bruno-gen
+npm install gen-bruno
 ```
 
 **Requires Node.js 24+**.
@@ -48,7 +48,7 @@ npm install bruno-gen
 ## CLI Usage
 
 ```bash
-bruno-gen [spec] [output] [options]
+gen-bruno [spec] [output] [options]
 ```
 
 ### Options
@@ -67,19 +67,19 @@ bruno-gen [spec] [output] [options]
 
 ```bash
 # OpenAPI spec → Bruno collection (grouped by tag)
-bruno-gen ./openapi.yaml ./output
+gen-bruno ./openapi.yaml ./output
 
 # GraphQL schema with test assertions
-bruno-gen ./schema.graphql ./output --tests
+gen-bruno ./schema.graphql ./output --tests
 
 # Dry run to preview parsed spec
-bruno-gen ./openapi.yaml ./output --dry-run
+gen-bruno ./openapi.yaml ./output --dry-run
 
 # Group requests by URL path instead of tags
-bruno-gen ./openapi.yaml ./output --format path
+gen-bruno ./openapi.yaml ./output --format path
 
 # Use a config file with overrides
-bruno-gen --config ./brunogen.config.yaml --tests --verbose
+gen-bruno --config ./brunogen.config.yaml --tests --verbose
 ```
 
 ### Folder Grouping Strategies
@@ -112,7 +112,7 @@ Use programmatically in your own scripts. Supports both ESM and CommonJS.
 ### Basic Usage
 
 ```ts
-import { generate, parse } from "bruno-gen";
+import { generate, parse } from "gen-bruno";
 
 const ir = await parse("./openapi.yaml");
 
@@ -131,7 +131,7 @@ console.log(`Generated ${result.filesWritten.length} files`);
 Unified spec parser. Accepts file paths to OpenAPI 3.x YAML/JSON, Swagger 2.0, or GraphQL SDL files.
 
 ```ts
-import { parse } from "bruno-gen";
+import { parse } from "gen-bruno";
 
 // OpenAPI 3.x
 const ir = await parse("./openapi.yaml");
@@ -150,7 +150,7 @@ Returns a `CollectionIR` object with normalized endpoints, parameters, security 
 Fluent builder API for chaining configuration and generation.
 
 ```ts
-import { CollectionBuilder } from "bruno-gen";
+import { CollectionBuilder } from "gen-bruno";
 
 // From a spec file
 const result = await CollectionBuilder.fromSpec("./openapi.yaml")
@@ -170,7 +170,7 @@ await builder.withOptions({ grouping: "flat" }).generate("./out-flat");
 Load and merge a config file from the filesystem.
 
 ```ts
-import { loadConfig } from "bruno-gen";
+import { loadConfig } from "gen-bruno";
 
 // Auto-discover config in CWD
 const config = await loadConfig();
@@ -184,7 +184,7 @@ const config = await loadConfig(process.cwd(), "./config/brunogen.yaml");
 Three-layer config merge utility.
 
 ```ts
-import { mergeConfig } from "bruno-gen";
+import { mergeConfig } from "gen-bruno";
 
 const merged = mergeConfig(
   { format: "tag", tests: false },   // Built-in defaults
@@ -231,7 +231,7 @@ const addHeaderPlugin: Plugin = {
 ### Example: Auth Header Injection
 
 ```ts
-import type { Plugin } from "bruno-gen";
+import type { Plugin } from "gen-bruno";
 
 const authPlugin: Plugin = {
   name: "auth-header-injector",
@@ -307,14 +307,14 @@ Each `.bru` file contains the full request definition — method, URL, parameter
 - Run with `--verbose` to see detailed error output including stack traces
 
 ### Invalid Bruno output
-- Validate your spec first: `bruno-gen ./openapi.yaml ./output --dry-run`
+- Validate your spec first: `gen-bruno ./openapi.yaml ./output --dry-run`
 - Check for unsupported features in the warnings output
 - Ensure `$ref` references in your spec resolve correctly
 
 ### Module not found
 - Ensure you're running **Node.js 24 or higher** (`node --version`)
-- For ESM projects: use `import { generate } from "bruno-gen"`
-- For CommonJS projects: use `const { generate } = require("bruno-gen")`
+- For ESM projects: use `import { generate } from "gen-bruno"`
+- For CommonJS projects: use `const { generate } = require("gen-bruno")`
 
 ### Plugin not loaded
 - Verify the plugin file path is correct (relative to CWD or absolute)
@@ -323,7 +323,7 @@ Each `.bru` file contains the full request definition — method, URL, parameter
 
 ### Config file not discovered
 - Place `brunogen.config.yml` or `brunogen.config.json` in your project root
-- Or specify explicitly: `bruno-gen --config ./path/to/config.yaml`
+- Or specify explicitly: `gen-bruno --config ./path/to/config.yaml`
 
 ## Contributing
 

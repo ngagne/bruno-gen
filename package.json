@@ -1,5 +1,5 @@
 {
-  "name": "bruno-gen",
+  "name": "gen-bruno",
   "version": "1.0.0",
   "description": "Convert OpenAPI, Swagger, and GraphQL specs into Bruno API collections",
   "type": "module",
@@ -19,7 +19,7 @@
     }
   },
   "bin": {
-    "bruno-gen": "./dist/cli.js"
+    "gen-bruno": "./dist/cli.js"
   },
   "engines": {
     "node": ">=24"
@@ -47,12 +47,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/user/bruno-gen"
+    "url": "https://github.com/user/gen-bruno"
   },
   "bugs": {
-    "url": "https://github.com/user/bruno-gen/issues"
+    "url": "https://github.com/user/gen-bruno/issues"
   },
-  "homepage": "https://github.com/user/bruno-gen#readme",
+  "homepage": "https://github.com/user/gen-bruno#readme",
   "files": [
     "dist/",
     "README.md",

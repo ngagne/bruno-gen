@@ -523,7 +523,7 @@ vars {
 **`package.json`:**
 ```json
 {
-  "name": "bruno-gen",
+  "name": "gen-bruno",
   "type": "module",
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.js",
@@ -541,7 +541,7 @@ vars {
     }
   },
   "bin": {
-    "bruno-gen": "./dist/esm/cli.js"
+    "gen-bruno": "./dist/esm/cli.js"
   },
   "files": ["dist"]
 }

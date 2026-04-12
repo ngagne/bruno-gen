@@ -357,7 +357,7 @@ function sanitizeFileName(name: string): string {
 **Description:** `chalk` 5+, `ora` 8+, `figures` 6+ are ESM-only. If the CJS build of the library imports these, `require()` will fail.
 
 **Warning signs:**
-- `ERR_REQUIRE_ESM` error when users `require("bruno-gen")` in CommonJS
+- `ERR_REQUIRE_ESM` error when users `require("gen-bruno")` in CommonJS
 - CJS build works in dev but fails in production
 
 **Prevention strategy:**

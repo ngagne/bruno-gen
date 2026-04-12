@@ -143,5 +143,5 @@ None — discussion stayed within phase scope.
 
 ---
 
-*Phase: 03-bruno-generator-layer*
+*Phase: 03-gen-brunoerator-layer*
 *Context gathered: 2026-04-06*

@@ -1,5 +1,5 @@
 /**
- * CLI entry point for bruno-gen.
+ * CLI entry point for gen-bruno.
  * Commander.js program with all flags and error handling.
  */
 
@@ -34,7 +34,7 @@ function main(): void {
   const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf-8"));
 
   program
-    .name("bruno-gen")
+    .name("gen-bruno")
     .description("Convert OpenAPI, Swagger, and GraphQL specs into Bruno API collections")
     .version(pkg.version, "-V, --version")
     .argument("[spec]", "Path to OpenAPI, Swagger, or GraphQL spec file")

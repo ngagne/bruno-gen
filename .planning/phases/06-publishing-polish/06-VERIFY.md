@@ -60,7 +60,7 @@
 
 ## Publishing Requirements Status
 - [x] **PUB-01**: Package ready for npm — tarball verified, installable
-- [x] **PUB-02**: package.json has correct `bin` field (`bruno-gen` → `./dist/cli.js`)
+- [x] **PUB-02**: package.json has correct `bin` field (`gen-bruno` → `./dist/cli.js`)
 - [x] **PUB-03**: package.json has correct `main`, `module`, `types`, `exports` for dual CJS/ESM
 - [x] **PUB-04**: README.md with installation, usage, examples, and API documentation
 

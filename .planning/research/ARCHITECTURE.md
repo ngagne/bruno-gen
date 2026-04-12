@@ -567,7 +567,7 @@ interface GeneratedFile {
 ### 2.5 CLI Layer
 
 ```
-bruno-gen <input> [options]
+gen-bruno <input> [options]
 
 Arguments:
   input                    Path or URL to API spec file
@@ -607,7 +607,7 @@ The library exports two interfaces:
 
 #### Functional API
 ```ts
-import { generate } from "bruno-gen";
+import { generate } from "gen-bruno";
 
 const result = await generate("./openapi.yaml", {
   outputDir: "./bruno-collection",
@@ -619,7 +619,7 @@ const result = await generate("./openapi.yaml", {
 
 #### Fluent Builder API
 ```ts
-import { CollectionBuilder } from "bruno-gen";
+import { CollectionBuilder } from "gen-bruno";
 
 const builder = new CollectionBuilder()
   .fromOpenAPI("./openapi.yaml")
@@ -746,7 +746,7 @@ interface PluginContext {
 ```yaml
 plugins:
   - ./my-plugin.ts
-  - bruno-gen-plugin-auth
+  - gen-bruno-plugin-auth
 ```
 
 **Use cases:**
@@ -885,7 +885,7 @@ Output directory with complete Bruno collection
 ## 5. Directory Structure
 
 ```
-bruno-gen/
+gen-bruno/
 ├── src/
 │   ├── index.ts                  # Library entry point (exports generate, CollectionBuilder)
 │   ├── cli.ts                    # CLI entry point (commander)

@@ -46,7 +46,7 @@ Create a comprehensive `README.md` at the project root. The README must be produ
 
 1. **Header** — Project name, one-line description, npm install command
 2. **Quick Start** — Minimal CLI example that works immediately (3 lines max)
-3. **Installation** — `npm install bruno-gen` with node version requirement
+3. **Installation** — `npm install gen-bruno` with node version requirement
 4. **CLI Reference** — Complete flags table:
    | Flag | Description | Default |
    |------|-------------|---------|
@@ -61,13 +61,13 @@ Create a comprehensive `README.md` at the project root. The README must be produ
    Include 3 full CLI examples:
    ```bash
    # OpenAPI spec to Bruno collection
-   bruno-gen ./openapi.yaml ./output
+   gen-bruno ./openapi.yaml ./output
 
    # GraphQL with test assertions
-   bruno-gen ./schema.graphql ./output --tests
+   gen-bruno ./schema.graphql ./output --tests
 
    # Dry run to preview output
-   bruno-gen ./openapi.yaml ./output --dry-run
+   gen-bruno ./openapi.yaml ./output --dry-run
    ```
 
 5. **Config File** — Complete `brunogen.config.yml` example with ALL fields shown and commented (per D-04):
@@ -203,13 +203,13 @@ Also create `scripts/refresh-fixtures.sh` — a shell script that can pull fresh
 </read_first>
 
 Add the following fields to `package.json`:
-- `repository`: `{ "type": "git", "url": "https://github.com/<user>/bruno-gen" }` (placeholder URL — user will replace)
-- `bugs`: `{ "url": "https://github.com/<user>/bruno-gen/issues" }`
-- `homepage`: `https://github.com/<user>/bruno-gen#readme`
+- `repository`: `{ "type": "git", "url": "https://github.com/<user>/gen-bruno" }` (placeholder URL — user will replace)
+- `bugs`: `{ "url": "https://github.com/<user>/gen-bruno/issues" }`
+- `homepage`: `https://github.com/<user>/gen-bruno#readme`
 - `files`: `["dist/", "README.md", "LICENSE"]`
 
 Verify existing fields are correct:
-- `bin`: `{"bruno-gen": "./dist/cli.js"}` ✓
+- `bin`: `{"gen-bruno": "./dist/cli.js"}` ✓
 - `main`, `module`, `types`, `exports`: already correct from Phase 5
 - `engines`: `{"node": ">=24"}` ✓
 

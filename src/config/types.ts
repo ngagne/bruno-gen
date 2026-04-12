@@ -2,7 +2,7 @@
  * Config system types — resolved configuration after merging defaults, file, and CLI flags.
  */
 
-/** A bruno-gen plugin (forward-declared to avoid circular import). */
+/** A gen-bruno plugin (forward-declared to avoid circular import). */
 interface _Plugin {
   name: string;
   hooks: Record<string, unknown>;

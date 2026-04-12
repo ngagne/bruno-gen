@@ -27,7 +27,7 @@ interface PluginHooks {
   preOutput?: (content: string, ctx: PreOutputContext) => Promise<string>;
 }
 
-/** A bruno-gen plugin. */
+/** A gen-bruno plugin. */
 interface Plugin {
   name: string;
   hooks: PluginHooks;
