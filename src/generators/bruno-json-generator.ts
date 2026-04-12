@@ -39,7 +39,9 @@ function generateBrunoJson(ir: CollectionIR): string {
   const brunoJson: BrunoJson = {
     type: "collection",
     name: ir.info.title,
-    version: ir.info.version,
+    // Bruno's schema requires the literal string "1" for the version field.
+    // This is the Bruno collection format version, not the API version.
+    version: "1",
   };
 
   // Add description if available

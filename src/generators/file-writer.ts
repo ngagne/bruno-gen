@@ -54,11 +54,11 @@ async function writeBruFile(content: string, outputPath: string): Promise<WriteR
 
 /**
  * Create the full directory structure for a Bruno collection.
- * @param outputDir - The root output directory
+ * Note: Does NOT create environments/ — that is created on-demand
+ * only when there are meaningful environment variables to write.
  */
 async function prepareOutputDir(outputDir: string): Promise<void> {
   await ensureDir(outputDir);
-  await ensureDir(join(outputDir, "environments"));
 }
 
 /**

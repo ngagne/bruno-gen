@@ -28,7 +28,7 @@ describe("bruno-json-generator", () => {
 
     expect(parsed.type).toBe("collection");
     expect(parsed.name).toBe("Test API");
-    expect(parsed.version).toBe("1.0.0");
+    expect(parsed.version).toBe("1");
     expect(parsed.scripts).toBeDefined();
     expect(parsed.scripts.filesystemAccess.allow).toBe(false);
   });

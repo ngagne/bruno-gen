@@ -8,7 +8,8 @@ import type { Plugin, PluginContext } from "../plugins/types.js";
 import type { ResolvedConfig } from "../config/types.js";
 import { prepareOutputDir, writeBruFile } from "./file-writer.js";
 import { generateCollectionBru } from "./collection-generator.js";
-import { generateEnvironmentBru } from "./environment-generator.js";
+import { generateAuthVars } from "./environment-generator.js";
+import { formatBlock } from "./bru-serializer.js";
 import { generateBrunoJson } from "./bruno-json-generator.js";
 import { generateFolderGroups } from "./folder-generator.js";
 import { generateRequestBru } from "./request-generator.js";
@@ -95,18 +96,28 @@ async function generate(ir: CollectionIR, options: GenerateOptions): Promise<Gen
       warnings.push(`Failed to write collection.bru: ${collectionResult.error}`);
     }
 
-    // Step 4: Generate environment file
-    const envBru = generateEnvironmentBru(transformedIR);
-    const envPath = `${options.outputDir}/environments/default.bru`;
-    const envResult = await writeBruFile(envBru, envPath);
-    if (envResult.success) {
-      filesWritten.push(envPath);
-    } else {
-      warnings.push(`Failed to write environment file: ${envResult.error}`);
+    // Step 4: Generate environment file only if there are meaningful vars
+    // (auth vars, server variable defaults). Skip if the only var would be baseUrl
+    // since that belongs in collection-level vars, not environment.
+    const envVars = collectEnvironmentVars(transformedIR);
+    if (Object.keys(envVars).length > 0) {
+      const envBru = formatEnvVarsBlock(envVars);
+      const envPath = `${options.outputDir}/environments/default.bru`;
+      const envResult = await writeBruFile(envBru, envPath);
+      if (envResult.success) {
+        filesWritten.push(envPath);
+      } else {
+        warnings.push(`Failed to write environment file: ${envResult.error}`);
+      }
     }
 
     // Step 5: Generate folder groups and request files
-    const folderGroups = generateFolderGroups(transformedIR, { format: options.grouping });
+    let folderGroups = generateFolderGroups(transformedIR, { format: options.grouping });
+
+    // Skip the "ungrouped" folder if it's the only group — files go at root instead
+    if (folderGroups.length === 1 && folderGroups[0].folderName === "ungrouped") {
+      folderGroups = generateFolderGroups(transformedIR, { format: "flat" });
+    }
 
     for (const group of folderGroups) {
       // Determine the directory for request files
@@ -201,3 +212,34 @@ async function generate(ir: CollectionIR, options: GenerateOptions): Promise<Gen
 
 export { generate };
 export type { GenerateOptions, GenerateResult };
+
+/**
+ * Collect environment variables from IR, excluding baseUrl (which goes in collection vars).
+ * Returns only auth vars and server variable defaults.
+ */
+function collectEnvironmentVars(ir: CollectionIR): Record<string, string> {
+  const vars: Record<string, string> = {};
+
+  // Auth variables from all security schemes
+  const authVars = generateAuthVars(ir.securitySchemes);
+  Object.assign(vars, authVars);
+
+  // Server variable defaults
+  if (ir.servers && ir.servers.length > 0 && ir.servers[0].variables) {
+    const serverVars = ir.servers[0].variables;
+    for (const [key, serverVar] of Object.entries(serverVars)) {
+      if (serverVar.default) {
+        vars[key] = serverVar.default;
+      }
+    }
+  }
+
+  return vars;
+}
+
+/**
+ * Format environment variables as a vars block.
+ */
+function formatEnvVarsBlock(vars: Record<string, unknown>): string {
+  return formatBlock("vars", vars);
+}

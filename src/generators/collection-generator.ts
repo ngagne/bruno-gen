@@ -1,11 +1,12 @@
 /**
  * Generate collection.bru from CollectionIR.
- * Includes meta, auth, docs blocks.
+ * Includes meta, auth, vars, docs blocks.
  */
 
 import type { CollectionIR } from "../ir/index.js";
 import { formatBlock, formatBlockWithContent } from "./bru-serializer.js";
 import { generateAuthMode } from "./auth-generator.js";
+import { extractBaseUrl } from "./environment-generator.js";
 
 interface CollectionBruOptions {
   /** Override default auth mode. */
@@ -41,6 +42,12 @@ function generateCollectionBru(ir: CollectionIR, options?: CollectionBruOptions)
     if (authConfigBlock) {
       blocks.push(authConfigBlock);
     }
+  }
+
+  // Collection-level vars (baseUrl is defined here so requests can use {{baseUrl}})
+  const varsBlock = generateCollectionVars(ir);
+  if (varsBlock) {
+    blocks.push(varsBlock);
   }
 
   // Docs block
@@ -131,5 +138,30 @@ function generateDocsContent(ir: CollectionIR): string {
   return lines.join("\n");
 }
 
-export { generateCollectionBru, generateDocsContent, generateAuthConfigBlock };
+export {
+  generateCollectionBru,
+  generateDocsContent,
+  generateAuthConfigBlock,
+  generateCollectionVars,
+};
 export type { CollectionBruOptions };
+
+/**
+ * Generate collection-level vars block (baseUrl).
+ * Returns null if no vars to define.
+ */
+function generateCollectionVars(ir: CollectionIR): string | null {
+  const vars: Record<string, unknown> = {};
+
+  // baseUrl — the server URL that requests reference via {{baseUrl}}
+  const baseUrl = extractBaseUrl(ir);
+  if (baseUrl) {
+    vars.baseUrl = baseUrl;
+  }
+
+  if (Object.keys(vars).length === 0) {
+    return null;
+  }
+
+  return formatBlock("vars:pre-request", vars);
+}

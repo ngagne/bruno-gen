@@ -101,7 +101,7 @@ describe("generator integration tests", () => {
     // Verify bruno.json is in the files written
     expect(result.filesWritten.some((f) => f.endsWith("bruno.json"))).toBe(true);
 
-    // Verify collection.bru was created
+    // Verify collection.bru has baseUrl in vars (so {{baseUrl}} resolves)
     const collectionBruPath = join(testOutputDir, "collection.bru");
     const collectionContent = await readFile(collectionBruPath, "utf-8");
     expect(collectionContent).toContain("meta {");
@@ -109,13 +109,16 @@ describe("generator integration tests", () => {
     expect(collectionContent).toContain("version: 1.0.0");
     expect(collectionContent).toContain("auth {");
     expect(collectionContent).toContain("mode: bearer");
+    expect(collectionContent).toContain("vars:pre-request {");
+    expect(collectionContent).toContain("baseUrl: https://api.example.com/v1");
 
-    // Verify environment file was created
+    // Verify environment file was created (auth vars only, baseUrl is in collection vars)
     const envBruPath = join(testOutputDir, "environments", "default.bru");
     const envContent = await readFile(envBruPath, "utf-8");
     expect(envContent).toContain("vars {");
-    expect(envContent).toContain("baseUrl: https://api.example.com/v1");
     expect(envContent).toContain("bearerAuthToken");
+    // baseUrl should NOT be in env file since it's in collection vars
+    expect(envContent).not.toContain("baseUrl");
 
     // Verify bruno.json was created (required for valid Bruno collection)
     const brunoJsonPath = join(testOutputDir, "bruno.json");
@@ -123,7 +126,7 @@ describe("generator integration tests", () => {
     const brunoJson = JSON.parse(brunoJsonContent);
     expect(brunoJson.type).toBe("collection");
     expect(brunoJson.name).toBe("Test API");
-    expect(brunoJson.version).toBe("1.0.0");
+    expect(brunoJson.version).toBe("1");
     expect(brunoJson.description).toBe("A test API collection");
     expect(brunoJson.scripts.filesystemAccess.allow).toBe(false);
 
@@ -140,12 +143,13 @@ describe("generator integration tests", () => {
         f.endsWith(".bru") &&
         !f.includes("collection.bru") &&
         !f.includes("folder.bru") &&
-        !f.includes("default.bru"),
+        !f.includes("default.bru") &&
+        !f.includes("bruno.json"),
     );
     expect(requestBruFiles.length).toBeGreaterThan(0);
   });
 
-  it("handles endpoints with no tags (ungrouped)", async () => {
+  it("handles endpoints with no tags (ungrouped) — no ungrouped folder if only group", async () => {
     const ir: CollectionIR = {
       info: { title: "Ungrouped API", version: "1.0.0" },
       servers: [{ url: "https://api.test.com", variables: {} }],
@@ -174,11 +178,20 @@ describe("generator integration tests", () => {
     const result = await generate(ir, { outputDir: ungroupedDir });
 
     expect(result.success).toBe(true);
-    // Should have ungrouped folder
+    // Should NOT have ungrouped folder (it's the only group, so files go at root)
     const ungroupedFolder = join(ungroupedDir, "ungrouped");
     const folderBruPath = join(ungroupedFolder, "folder.bru");
-    const folderContent = await readFile(folderBruPath, "utf-8");
-    expect(folderContent).toContain("name: Ungrouped");
+    await expect(readFile(folderBruPath, "utf-8")).rejects.toThrow();
+    // Request file should be at root
+    const requestPath = join(ungroupedDir, "HealthCheck.bru");
+    const requestContent = await readFile(requestPath, "utf-8");
+    expect(requestContent).toContain("meta {");
+    // collection.bru should have baseUrl in vars
+    const collectionBruPath = join(ungroupedDir, "collection.bru");
+    const collectionContent = await readFile(collectionBruPath, "utf-8");
+    expect(collectionContent).toContain("baseUrl: https://api.test.com");
+    // No environment file since there are no auth vars or server vars
+    expect(result.filesWritten.some((f) => f.includes("environments"))).toBe(false);
   });
 
   it("generates auth blocks for different security schemes", async () => {

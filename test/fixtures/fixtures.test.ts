@@ -52,10 +52,12 @@ describe("Real-world fixture integration tests", () => {
         // Verify .bru files contain expected content
         const collectionContent = readFileSync(join(outputDir, "collection.bru"), "utf-8");
         expect(collectionContent).toContain("Stripe-like Payment API");
+        // baseUrl should be in collection.bru vars
+        expect(collectionContent).toMatch(/baseUrl/);
 
-        // Verify env file contains baseUrl
+        // Verify env file contains auth vars (baseUrl is now in collection.bru vars)
         const envContent = readFileSync(join(outputDir, "environments", envFiles[0]), "utf-8");
-        expect(envContent).toMatch(/baseUrl|base_url/i);
+        expect(envContent).toMatch(/vars\s*\{/);
       } finally {
         rmSync(outputDir, { recursive: true, force: true });
       }
@@ -142,15 +144,12 @@ describe("Real-world fixture integration tests", () => {
         );
         expect(requestFiles.length).toBeGreaterThan(0);
 
-        expect(existsSync(join(outputDir, "environments"))).toBe(true);
-        const envFiles = readdirSync(join(outputDir, "environments")).filter((f) =>
-          f.endsWith(".bru"),
-        );
-        expect(envFiles.length).toBeGreaterThan(0);
-
-        // Verify collection name
+        // Verify collection name and baseUrl in vars
         const collectionContent = readFileSync(join(outputDir, "collection.bru"), "utf-8");
         expect(collectionContent).toContain("Petstore API");
+        expect(collectionContent).toMatch(/baseUrl/);
+        // No environments/ directory since there are no auth schemes or server vars
+        expect(existsSync(join(outputDir, "environments"))).toBe(false);
       } finally {
         rmSync(outputDir, { recursive: true, force: true });
       }

@@ -23,8 +23,9 @@ function serializeValue(value: unknown): string {
     return value.toString();
   }
   if (typeof value === "string") {
-    // Bruno variable references should not be quoted
-    if (/^\{\{[^}]+\}\}$/.test(value)) {
+    // Bruno variable references (pure or mixed with paths) should not be quoted
+    // e.g. {{token}} or {{baseUrl}}/data/2.5/weather
+    if (/\{\{[^}]+\}\}/.test(value)) {
       return value;
     }
     // Simple strings without special chars don't need quotes
