@@ -3,8 +3,7 @@
  */
 
 import type { CollectionIR } from "../ir/collection.js";
-import type { EndpointIR } from "../ir/endpoint.js";
-import type { Plugin, PluginContext } from "./types.js";
+import type { Plugin, PluginContext, PreOutputContext } from "./types.js";
 
 /**
  * Execute transformIR hooks as a sequential waterfall.
@@ -31,13 +30,6 @@ async function executeTransformIR(
     }
   }
   return current;
-}
-
-/** Context passed to preOutput hooks. */
-interface PreOutputContext {
-  filePath: string;
-  endpoint?: EndpointIR;
-  folder?: string;
 }
 
 /**

@@ -1,10 +1,21 @@
 import { describe, it, expect } from "vitest";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { GraphQLParser } from "./GraphQLParser.js";
 
 describe("GraphQLParser", () => {
   const parser = new GraphQLParser();
 
   describe("canParse", () => {
+    it("recognizes GraphQL file extensions and SDL variants", () => {
+      expect(parser.canParse({ _filePath: "schema.GQL" })).toBe(true);
+      expect(
+        parser.canParse({ _filePath: "schema.txt", _raw: "input Search { term: String }" }),
+      ).toBe(true);
+      expect(parser.canParse({ _filePath: "schema.txt" })).toBe(false);
+    });
+
     it("returns true for GraphQL SDL content", () => {
       expect(parser.canParse({ _raw: "type Query { users: [User] }" })).toBe(true);
     });
@@ -15,6 +26,20 @@ describe("GraphQLParser", () => {
   });
 
   describe("parse", () => {
+    it("loads and validates SDL from a file and reports invalid SDL", async () => {
+      const dir = await mkdtemp(join(tmpdir(), "gen-bruno-graphql-"));
+      const file = join(dir, "schema.graphql");
+      await writeFile(file, "type Query { ping: String! }");
+      await expect(parser.parse({ filePath: file })).resolves.toMatchObject({
+        endpoints: [expect.objectContaining({ id: "ping" })],
+      });
+      await expect(parser.validate({ filePath: file })).resolves.toMatchObject({ valid: true });
+      await rm(dir, { recursive: true, force: true });
+      await expect(parser.parse({ content: "type Query {" })).rejects.toThrow(
+        "Failed to parse GraphQL SDL",
+      );
+    });
+
     it("parses a minimal GraphQL SDL", async () => {
       const sdl = `
         type User {

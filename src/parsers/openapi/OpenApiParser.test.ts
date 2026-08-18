@@ -1,4 +1,7 @@
 import { describe, it, expect } from "vitest";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { OpenApiParser } from "./OpenApiParser.js";
 
 describe("OpenApiParser", () => {
@@ -24,6 +27,29 @@ describe("OpenApiParser", () => {
   });
 
   describe("parse", () => {
+    it("parses YAML and file input and rejects an unsupported document", async () => {
+      await expect(
+        parser.parse({
+          content: "openapi: 3.0.0\ninfo:\n  title: YAML API\n  version: '1'\npaths: {}\n",
+        }),
+      ).resolves.toMatchObject({ info: { title: "YAML API" } });
+
+      const dir = await mkdtemp(join(tmpdir(), "gen-bruno-openapi-"));
+      const file = join(dir, "api.json");
+      await writeFile(
+        file,
+        JSON.stringify({ openapi: "3.0.0", info: { title: "File API", version: "1" }, paths: {} }),
+      );
+      await expect(parser.parse({ filePath: file })).resolves.toMatchObject({
+        info: { title: "File API" },
+      });
+      await expect(parser.validate({ filePath: file })).resolves.toMatchObject({ valid: true });
+      await rm(dir, { recursive: true, force: true });
+      await expect(parser.parse({ content: { swagger: "2.0" } })).rejects.toThrow(
+        "Not an OpenAPI 3.x spec",
+      );
+    });
+
     it("parses a minimal OpenAPI 3.0 spec", async () => {
       const spec = {
         openapi: "3.0.0",

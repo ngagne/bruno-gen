@@ -10,12 +10,12 @@
 
 import type TableConstructor from "cli-table3";
 import type { CollectionIR } from "../ir/index.js";
+import { planCollection } from "../generators/collection-plan.js";
 
 // Static imports — modules exist at runtime
 import chalk from "chalk";
 import ora from "ora";
 import Table from "cli-table3";
-import { sanitizeFolderName } from "../generators/path-sanitizer.js";
 
 /**
  * Check if we're running in an interactive terminal.
@@ -132,51 +132,12 @@ interface DryRunOptions {
   generateTests: boolean;
 }
 
-interface DryRunGroup {
-  folderName: string | null;
-  endpoints: { id: string; method: string; path: string }[];
-}
-
 /**
- * Print an ASCII tree of the generated collection structure to stdout.
+ * Print the exact files the generator would write, without touching disk.
  */
 function printDryRunTree(ir: CollectionIR, opts: DryRunOptions): void {
-  const lines: string[] = [];
-  lines.push(".");
-  lines.push("├── collection.bru");
-  lines.push("├── environments/");
-  lines.push("│   └── default.bru");
-
-  const groups = groupEndpointsForDryRun(ir, opts.format);
-
-  for (let g = 0; g < groups.length; g++) {
-    const group = groups[g];
-    const isLastGroup = g === groups.length - 1;
-
-    if (group.folderName) {
-      const folderPrefix = isLastGroup ? "└── " : "├── ";
-      const childPrefix = isLastGroup ? "    " : "│   ";
-      lines.push(`${folderPrefix}${group.folderName}/`);
-      lines.push(`${childPrefix}└── folder.bru`);
-
-      for (let e = 0; e < group.endpoints.length; e++) {
-        const ep = group.endpoints[e];
-        const isLastEp = e === group.endpoints.length - 1;
-        const epPrefix = isLastEp ? "    └── " : "    ├── ";
-        const filename = ep.id || `${ep.method}-${ep.path}`;
-        lines.push(`${childPrefix}${epPrefix}${filename}.bru`);
-      }
-    } else {
-      // Flat mode — all at root
-      for (let e = 0; e < group.endpoints.length; e++) {
-        const ep = group.endpoints[e];
-        const isLastEp = e === group.endpoints.length - 1;
-        const epPrefix = isLastEp ? "└── " : "├── ";
-        const filename = ep.id || `${ep.method}-${ep.path}`;
-        lines.push(`${epPrefix}${filename}.bru`);
-      }
-    }
-  }
+  const plan = planCollection(ir, { grouping: opts.format, generateTests: opts.generateTests });
+  const lines = [".", ...plan.files.map((file) => `├── ${file.relativePath}`)];
 
   if (opts.generateTests) {
     lines.push("");
@@ -184,49 +145,6 @@ function printDryRunTree(ir: CollectionIR, opts: DryRunOptions): void {
   }
 
   process.stdout.write(lines.join("\n") + "\n");
-}
-
-function groupEndpointsForDryRun(ir: CollectionIR, format: "tag" | "path" | "flat"): DryRunGroup[] {
-  if (format === "flat") {
-    return [{ folderName: null, endpoints: ir.endpoints }];
-  }
-
-  if (format === "path") {
-    const pathMap = new Map<string, typeof ir.endpoints>();
-    for (const ep of ir.endpoints) {
-      const firstSegment = ep.path.split("/").filter(Boolean)[0] ?? "root";
-      const existing = pathMap.get(firstSegment) ?? [];
-      existing.push(ep);
-      pathMap.set(firstSegment, existing);
-    }
-    const groups: DryRunGroup[] = [];
-    for (const [segment, endpoints] of pathMap) {
-      groups.push({ folderName: sanitizeFolderName(segment), endpoints });
-    }
-    return groups;
-  }
-
-  // Default: tag-based grouping
-  const tagMap = new Map<string, typeof ir.endpoints>();
-  const ungrouped: typeof ir.endpoints = [];
-  for (const ep of ir.endpoints) {
-    if (ep.tags && ep.tags.length > 0) {
-      const tag = ep.tags[0];
-      const existing: typeof ir.endpoints = tagMap.get(tag) ?? [];
-      existing.push(ep);
-      tagMap.set(tag, existing);
-    } else {
-      ungrouped.push(ep);
-    }
-  }
-  const groups: DryRunGroup[] = [];
-  for (const [tag, endpoints] of tagMap) {
-    groups.push({ folderName: sanitizeFolderName(tag), endpoints });
-  }
-  if (ungrouped.length > 0) {
-    groups.push({ folderName: "ungrouped", endpoints: ungrouped });
-  }
-  return groups;
 }
 
 export { isInteractive, formatSummary, createSpinner, formatError, printDryRunTree };

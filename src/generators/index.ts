@@ -5,6 +5,8 @@
 
 export { generate } from "./orchestrator.js";
 export type { GenerateOptions, GenerateResult } from "./orchestrator.js";
+export { planCollection } from "./collection-plan.js";
+export type { CollectionPlan, CollectionPlanOptions, PlannedFile, PlannedFileKind } from "./collection-plan.js";
 
 // Sub-generator functions (for advanced usage and testing)
 export { generateCollectionBru } from "./collection-generator.js";

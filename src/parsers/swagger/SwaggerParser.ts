@@ -1,22 +1,12 @@
 import SwaggerParser from "@apidevtools/swagger-parser";
 import yaml from "js-yaml";
-import type {
-  CollectionIR,
-  Server,
-  Tag,
-  ParameterIR,
-  ResponseIR,
-  RequestBodyIR,
-  SchemaIR,
-} from "../../ir/index.js";
+import type { CollectionIR } from "../../ir/index.js";
 import type { SpecInput } from "../types.js";
 import type { ValidationResult } from "../../ir/validation.js";
 import { loadSpec } from "../utils/spec-loader.js";
 import { validateOpenAPI } from "../utils/spec-validator.js";
 import { normalizeSwaggerToOpenAPI3 } from "./normalizer.js";
-import { mapEndpoints } from "../openapi/endpoint-mapper.js";
-import { mapSchema } from "../openapi/schema-mapper.js";
-import { mapSecuritySchemes, mapSecurityRequirements } from "../openapi/security-mapper.js";
+import { mapOpenApiDocument } from "../openapi/collection-mapper.js";
 
 type UnknownObj = Record<string, unknown>;
 
@@ -59,7 +49,7 @@ export class SwaggerParser_ {
     }
 
     const normalized = normalizeSwaggerToOpenAPI3(resolved);
-    return this.buildCollectionIR(normalized as UnknownObj);
+    return mapOpenApiDocument(normalized as UnknownObj);
   }
 
   async validate(input: SpecInput): Promise<ValidationResult> {
@@ -78,54 +68,6 @@ export class SwaggerParser_ {
     return validateOpenAPI(data, source);
   }
 
-  private buildCollectionIR(spec: UnknownObj): CollectionIR {
-    const info = (spec.info as UnknownObj) || {};
-    const servers = (spec.servers as Server[]) || [];
-
-    const components = (spec.components as UnknownObj) || {};
-    const securitySchemes = mapSecuritySchemes(
-      components.securitySchemes as UnknownObj | undefined,
-    );
-    const defaultSecurity = mapSecurityRequirements(spec.security as UnknownObj[] | undefined);
-    const tags = ((spec.tags as UnknownObj[]) || []).map((t) => ({
-      name: (t?.name as string) || "",
-      description: t?.description as string | undefined,
-      externalDocs: t?.externalDocs as Tag["externalDocs"],
-    }));
-
-    const rootProduces = ((spec as UnknownObj)._rootProduces as string[] | undefined) || [];
-    const rootConsumes = ((spec as UnknownObj)._rootConsumes as string[] | undefined) || [];
-
-    const endpoints = mapEndpoints((spec.paths as UnknownObj) || {}, rootProduces, rootConsumes);
-
-    const schemas: Record<string, SchemaIR> = {};
-    if (components.schemas) {
-      for (const [name, schemaObj] of Object.entries(components.schemas as UnknownObj)) {
-        schemas[name] = mapSchema(schemaObj as UnknownObj, `#/components/schemas/${name}`);
-      }
-    }
-
-    const parameters = (components.parameters as Record<string, ParameterIR>) || {};
-    const responses = (components.responses as Record<string, ResponseIR>) || {};
-    const requestBodies = (components.requestBodies as Record<string, RequestBodyIR>) || {};
-
-    return {
-      info: {
-        title: (info.title as string) || "Untitled API",
-        description: info.description as string | undefined,
-        version: (info.version as string) || "1.0.0",
-        contact: info.contact as CollectionIR["info"]["contact"],
-        license: info.license as CollectionIR["info"]["license"],
-      },
-      servers,
-      securitySchemes,
-      defaultSecurity,
-      tags,
-      endpoints,
-      components: { schemas, parameters, responses, requestBodies },
-      extensions: {},
-    };
-  }
 }
 
 export { SwaggerParser_ as SwaggerParser };

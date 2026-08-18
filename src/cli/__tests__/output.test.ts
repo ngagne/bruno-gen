@@ -94,6 +94,13 @@ describe("cli/output", () => {
       expect(result).toContain("Warnings: 1");
       expect(result).toContain("Time: 150ms");
     });
+
+    it("produces a table in interactive mode", () => {
+      (process.stdout as unknown as { isTTY: boolean }).isTTY = true;
+      const result = formatSummary({ endpoints: 5, filesWritten: 12, warnings: 1, elapsed: 150 });
+      expect(result).toContain("Endpoints");
+      expect(result).toContain("Files written");
+    });
   });
 
   it("renders a dry-run tree for tag, path, and flat layouts", () => {
@@ -134,7 +141,7 @@ describe("cli/output", () => {
     printDryRunTree(ir, { format: "flat", generateTests: false });
     const output = write.mock.calls.map(([value]) => String(value)).join("\n");
     expect(output).toContain("users/");
-    expect(output).toContain("get-/health.bru");
+    expect(output).toContain("get-health.bru");
     expect(output).toContain("post-response test assertions");
     write.mockRestore();
   });

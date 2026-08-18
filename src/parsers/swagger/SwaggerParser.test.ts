@@ -1,4 +1,7 @@
 import { describe, it, expect } from "vitest";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { SwaggerParser } from "./SwaggerParser.js";
 
 describe("SwaggerParser", () => {
@@ -15,6 +18,31 @@ describe("SwaggerParser", () => {
   });
 
   describe("parse", () => {
+    it("parses YAML content and rejects a non-Swagger document", async () => {
+      await expect(
+        parser.parse({
+          content: "swagger: '2.0'\ninfo:\n  title: YAML API\n  version: '1'\npaths: {}\n",
+        }),
+      ).resolves.toMatchObject({ info: { title: "YAML API" } });
+      await expect(parser.parse({ content: "openapi: 3.0.0\npaths: {}" })).rejects.toThrow(
+        "Not a Swagger 2.0 spec",
+      );
+    });
+
+    it("loads and validates a Swagger file", async () => {
+      const dir = await mkdtemp(join(tmpdir(), "gen-bruno-swagger-"));
+      const file = join(dir, "api.json");
+      await writeFile(
+        file,
+        JSON.stringify({ swagger: "2.0", info: { title: "File API", version: "1" }, paths: {} }),
+      );
+      await expect(parser.parse({ filePath: file })).resolves.toMatchObject({
+        info: { title: "File API" },
+      });
+      await expect(parser.validate({ filePath: file })).resolves.toMatchObject({ valid: true });
+      await rm(dir, { recursive: true, force: true });
+    });
+
     it("parses a minimal Swagger 2.0 spec", async () => {
       const spec = {
         swagger: "2.0",
