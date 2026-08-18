@@ -74,7 +74,7 @@ async function generate(ir: CollectionIR, options: GenerateOptions): Promise<Gen
     }
 
     // Step 1: Prepare output directory
-    await prepareOutputDir(options.outputDir);
+    await prepareOutputDir(options.outputDir, { clean: options.force === true });
 
     // Step 2: Generate bruno.json (required for valid Bruno collection)
     const brunoJson = generateBrunoJson(transformedIR);
@@ -96,9 +96,8 @@ async function generate(ir: CollectionIR, options: GenerateOptions): Promise<Gen
       warnings.push(`Failed to write collection.bru: ${collectionResult.error}`);
     }
 
-    // Step 4: Generate environment file only if there are meaningful vars
-    // (auth vars, server variable defaults). Skip if the only var would be baseUrl
-    // since that belongs in collection-level vars, not environment.
+    // Step 4: Generate environment values for credentials and required request
+    // inputs. baseUrl remains collection-scoped.
     const envVars = collectEnvironmentVars(transformedIR);
     if (Object.keys(envVars).length > 0) {
       const envBru = formatEnvVarsBlock(envVars);
@@ -231,6 +230,15 @@ function collectEnvironmentVars(ir: CollectionIR): Record<string, string> {
       if (serverVar.default) {
         vars[key] = serverVar.default;
       }
+    }
+  }
+
+  // Required parameters are represented as editable Bruno variables. This
+  // avoids baking invented values (such as an API key) into a request file.
+  for (const endpoint of ir.endpoints) {
+    for (const parameter of endpoint.parameters) {
+      if (!parameter.required || vars[parameter.name] !== undefined) continue;
+      vars[parameter.name] = String(parameter.example ?? parameter.schema.default ?? "");
     }
   }
 

@@ -1,6 +1,6 @@
 {
   "name": "gen-bruno",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Convert OpenAPI, Swagger, and GraphQL specs into Bruno API collections",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -62,6 +62,7 @@
     "@eslint/js": "^9.0.0",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^24.0.0",
+    "@usebruno/lang": "^0.38.0",
     "@vitest/coverage-v8": "^4.1.2",
     "eslint": "^9.0.0",
     "eslint-config-prettier": "^10.0.0",

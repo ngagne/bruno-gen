@@ -27,9 +27,9 @@ describe("test-generator", () => {
       ];
 
       const result = generatePostResponseTests(responses);
-      expect(result).toContain("post-response {");
-      expect(result).toContain('expect(res.getStatus()).to.equal(200, "expected status 200")');
-      expect(result).toContain("res.setStatusLabel");
+      expect(result).toContain("tests {");
+      expect(result).toContain('expect(res.status).to.equal(200, "expected status 200")');
+      expect(result).toContain('test("200 OK"');
     });
 
     it("generates required fields presence assertions", () => {
@@ -52,9 +52,9 @@ describe("test-generator", () => {
       ];
 
       const result = generatePostResponseTests(responses);
-      expect(result).toContain('res.getBody()).to.have.property("id"');
-      expect(result).toContain('res.getBody()).to.have.property("name"');
-      expect(result).toContain('res.getBody()).to.have.property("email"');
+      expect(result).toContain('res.body).to.have.property("id"');
+      expect(result).toContain('res.body).to.have.property("name"');
+      expect(result).toContain('res.body).to.have.property("email"');
     });
 
     it("generates example value assertion when spec provides example", () => {
@@ -74,7 +74,7 @@ describe("test-generator", () => {
       ];
 
       const result = generatePostResponseTests(responses);
-      expect(result).toContain("res.getBody().id").toContain("42");
+      expect(result).toContain("res.body.id").toContain("42");
     });
 
     it("filters out non-2xx responses", () => {

@@ -148,8 +148,8 @@ describe("Real-world fixture integration tests", () => {
         const collectionContent = readFileSync(join(outputDir, "collection.bru"), "utf-8");
         expect(collectionContent).toContain("Petstore API");
         expect(collectionContent).toMatch(/baseUrl/);
-        // No environments/ directory since there are no auth schemes or server vars
-        expect(existsSync(join(outputDir, "environments"))).toBe(false);
+        // Required request parameters are exposed as editable environment vars.
+        expect(existsSync(join(outputDir, "environments", "default.bru"))).toBe(true);
       } finally {
         rmSync(outputDir, { recursive: true, force: true });
       }

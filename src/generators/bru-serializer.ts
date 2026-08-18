@@ -5,7 +5,7 @@
 
 /**
  * Serialize a value to Bruno DSL format.
- * - Strings: unquoted if simple, quoted if contains special chars
+ * - Strings: raw Bruno values (the Bruno DSL does not use quoted scalar strings)
  * - Numbers: unquoted
  * - Booleans: unquoted true/false
  * - Null: unquoted null
@@ -28,23 +28,20 @@ function serializeValue(value: unknown): string {
     if (/\{\{[^}]+\}\}/.test(value)) {
       return value;
     }
-    // Simple strings without special chars don't need quotes
-    if (/^[a-zA-Z0-9._\-/@:]+$/.test(value)) {
-      return value;
-    }
     // Multi-line strings use ''' syntax
     if (value.includes("\n")) {
       return `'''${value}'''`;
     }
-    // Strings with spaces or special chars need quoting
-    return `"${value}"`;
+    // Bruno values are unquoted. Quoting a scalar makes the quote characters
+    // part of the value when Bruno reads the file.
+    return value;
   }
   if (Array.isArray(value)) {
-    const items = value.map(serializeValue).join(", ");
-    return `[${items}]`;
+    // The Bruno grammar requires list items on their own lines.
+    return `[\n${value.map((item) => `    ${serializeValue(item)}`).join("\n")}\n  ]`;
   }
   if (typeof value === "object") {
-    return JSON.stringify(value, null, 2);
+    return `'''${JSON.stringify(value, null, 2)}'''`;
   }
   return String(value);
 }
@@ -57,7 +54,7 @@ function escapeKey(key: string): string {
   if (/^[a-zA-Z0-9_\-:.]+$/.test(key)) {
     return key;
   }
-  return `"${key}"`;
+  return `"${key.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
 }
 
 /**

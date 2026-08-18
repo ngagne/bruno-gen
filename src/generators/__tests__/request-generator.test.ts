@@ -63,7 +63,7 @@ describe("request-generator", () => {
         generateTests: true,
       });
 
-      expect(result).toContain("post-response {");
+      expect(result).toContain("tests {");
       expect(result).toContain("expected status 200");
     });
 
@@ -166,7 +166,7 @@ describe("request-generator", () => {
         generateTests: true,
       });
 
-      expect(result).toContain("res.getBody().id");
+      expect(result).toContain("res.body.id");
       expect(result).toContain("42");
     });
   });

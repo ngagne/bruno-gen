@@ -3,11 +3,11 @@
  * Includes meta, method, params, headers, body, auth, docs, vars blocks.
  */
 
-import type { EndpointIR, CollectionIR, ParameterIR } from "../ir/index.js";
+import type { EndpointIR, CollectionIR, ParameterIR, SchemaIR } from "../ir/index.js";
 import { formatBlock, formatBlockWithContent, serializeValue } from "./bru-serializer.js";
 import { generateExample } from "./example-generator.js";
 import { generateAuthBlock, getEndpointAuthMode } from "./auth-generator.js";
-import { generateResponseDocs, generatePostResponseVars } from "./response-examples.js";
+import { generateResponseDocs } from "./response-examples.js";
 import { generatePostResponseTests } from "./test-generator.js";
 
 interface RequestBruOptions {
@@ -82,14 +82,6 @@ function generateRequestBru(
     const bodyBlock = generateBody(endpoint);
     if (bodyBlock) {
       blocks.push(bodyBlock);
-    }
-  }
-
-  // Post-response vars
-  if (endpoint.responses && endpoint.responses.length > 0) {
-    const varsBlock = generatePostResponseVars(endpoint.responses);
-    if (varsBlock) {
-      blocks.push(varsBlock);
     }
   }
 
@@ -168,13 +160,7 @@ function buildUrl(path: string, baseUrl: string): string {
  */
 function generatePathParams(endpoint: EndpointIR): string {
   const pathParams = endpoint.parameters.filter((p) => p.in === "path");
-  const entries: Record<string, unknown> = {};
-
-  for (const param of pathParams) {
-    entries[param.name] = generateParamValue(param);
-  }
-
-  return formatBlock("params:path", entries);
+  return generateParameterBlock("params:path", pathParams);
 }
 
 /**
@@ -182,19 +168,26 @@ function generatePathParams(endpoint: EndpointIR): string {
  */
 function generateQueryParams(endpoint: EndpointIR): string {
   const queryParams = endpoint.parameters.filter((p) => p.in === "query");
-  const entries: Record<string, unknown> = {};
+  return generateParameterBlock("params:query", queryParams);
+}
 
-  for (const param of queryParams) {
-    entries[param.name] = generateParamValue(param);
+function generateParameterBlock(name: string, parameters: ParameterIR[]): string {
+  const lines: string[] = [];
+  for (const parameter of parameters) {
+    lines.push(`  ${parameter.name}: ${generateParamValue(parameter)}`);
   }
-
-  return formatBlock("params:query", entries);
+  return `${name} {\n${lines.join("\n")}\n}`;
 }
 
 /**
  * Generate a parameter value (example or schema-derived).
  */
 function generateParamValue(param: ParameterIR): string {
+  // Required values are inputs, not examples to silently send. Keeping them in
+  // an environment makes the request immediately editable in Bruno.
+  if (param.required) {
+    return `{{${param.name}}}`;
+  }
   // Use explicit example
   if (param.example !== undefined) {
     return serializeValue(param.example);
@@ -221,6 +214,15 @@ function generateParamValue(param: ParameterIR): string {
  */
 function generateHeaders(endpoint: EndpointIR): string | null {
   const headers: Record<string, string> = {};
+
+  for (const parameter of endpoint.parameters.filter((p) => p.in === "header")) {
+    headers[parameter.name] = generateParamValue(parameter);
+  }
+
+  const cookieParams = endpoint.parameters.filter((p) => p.in === "cookie");
+  if (cookieParams.length > 0) {
+    headers.Cookie = cookieParams.map((p) => `${p.name}=${generateParamValue(p)}`).join("; ");
+  }
 
   // Content-Type from request body
   if (endpoint.requestBody && Object.keys(endpoint.requestBody.content).length > 0) {
@@ -290,7 +292,7 @@ function generateBody(endpoint: EndpointIR): string | null {
   let bodyContent: string;
 
   // Use explicit example
-  if (mediaType.example) {
+  if (mediaType.example !== undefined) {
     bodyContent = JSON.stringify(mediaType.example, null, 2);
   } else if (mediaType.examples) {
     const firstExample = Object.values(mediaType.examples)[0];
@@ -303,19 +305,41 @@ function generateBody(endpoint: EndpointIR): string | null {
     return null;
   }
 
+  // Bruno form bodies are dictionaries, not JSON text blocks.
+  if (contentType.includes("form-urlencoded") || contentType.includes("multipart")) {
+    const formData = extractFormData(mediaType.example, mediaType.examples, mediaType.schema);
+    if (!formData) return null;
+    return formatBlock(
+      contentType.includes("multipart") ? "body:multipart-form" : "body:form-urlencoded",
+      formData,
+    );
+  }
+
   // Determine body block type
   let blockType = "body:json";
   if (contentType.includes("graphql")) {
     blockType = "body:graphql";
   } else if (contentType.includes("xml")) {
     blockType = "body:xml";
-  } else if (contentType.includes("form-urlencoded")) {
-    blockType = "body:form-urlencoded";
-  } else if (contentType.includes("multipart")) {
-    blockType = "body:multipart-form";
+  } else if (!contentType.includes("json")) {
+    blockType = "body:text";
   }
 
   return formatBlockWithContent(blockType, bodyContent);
+}
+
+function extractFormData(
+  example: unknown,
+  examples: Record<string, { value: unknown }> | undefined,
+  schema: SchemaIR | undefined,
+): Record<string, unknown> | null {
+  const value =
+    example ??
+    Object.values(examples ?? {})[0]?.value ??
+    (schema ? generateExample(schema) : undefined);
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
 }
 
 /**
@@ -331,6 +355,17 @@ function generateRequestDocs(endpoint: EndpointIR): string | null {
   }
   if (endpoint.description) {
     sections.push(endpoint.description);
+    sections.push("");
+  }
+
+  if (endpoint.parameters.length > 0) {
+    sections.push("## Parameters");
+    sections.push("");
+    for (const parameter of endpoint.parameters) {
+      const required = parameter.required ? "required" : "optional";
+      const description = parameter.description ? ` — ${parameter.description}` : "";
+      sections.push(`- \`${parameter.name}\` (${parameter.in}, ${required})${description}`);
+    }
     sections.push("");
   }
 

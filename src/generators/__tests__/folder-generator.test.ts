@@ -132,7 +132,7 @@ describe("folder-generator", () => {
     it("generates meta block with name and sequence", () => {
       const result = generateFolderBru("My API", 3);
       expect(result).toContain("meta {");
-      expect(result).toContain('"My API"');
+      expect(result).toContain("name: My API");
       expect(result).toContain("seq: 3");
     });
   });

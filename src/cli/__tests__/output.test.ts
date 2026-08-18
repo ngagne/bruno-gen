@@ -1,5 +1,12 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { isInteractive, formatSummary, createSpinner, formatError } from "../output.js";
+import {
+  isInteractive,
+  formatSummary,
+  createSpinner,
+  formatError,
+  printDryRunTree,
+} from "../output.js";
+import type { CollectionIR } from "../../ir/index.js";
 
 describe("cli/output", () => {
   const originalEnv = process.env;
@@ -87,6 +94,49 @@ describe("cli/output", () => {
       expect(result).toContain("Warnings: 1");
       expect(result).toContain("Time: 150ms");
     });
+  });
+
+  it("renders a dry-run tree for tag, path, and flat layouts", () => {
+    const ir: CollectionIR = {
+      info: { title: "API", version: "1" },
+      servers: [],
+      securitySchemes: {},
+      defaultSecurity: [],
+      tags: [],
+      components: { schemas: {}, parameters: {}, responses: {}, requestBodies: {} },
+      extensions: {},
+      endpoints: [
+        {
+          id: "listUsers",
+          method: "get",
+          path: "/users",
+          tags: ["Users"],
+          deprecated: false,
+          parameters: [],
+          responses: [],
+          consumesContentTypes: [],
+        },
+        {
+          id: "",
+          method: "get",
+          path: "/health",
+          tags: [],
+          deprecated: false,
+          parameters: [],
+          responses: [],
+          consumesContentTypes: [],
+        },
+      ],
+    };
+    const write = vi.spyOn(process.stdout, "write").mockImplementation(() => true);
+    printDryRunTree(ir, { format: "tag", generateTests: true });
+    printDryRunTree(ir, { format: "path", generateTests: false });
+    printDryRunTree(ir, { format: "flat", generateTests: false });
+    const output = write.mock.calls.map(([value]) => String(value)).join("\n");
+    expect(output).toContain("users/");
+    expect(output).toContain("get-/health.bru");
+    expect(output).toContain("post-response test assertions");
+    write.mockRestore();
   });
 
   describe("formatError", () => {

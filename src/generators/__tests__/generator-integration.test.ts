@@ -105,7 +105,7 @@ describe("generator integration tests", () => {
     const collectionBruPath = join(testOutputDir, "collection.bru");
     const collectionContent = await readFile(collectionBruPath, "utf-8");
     expect(collectionContent).toContain("meta {");
-    expect(collectionContent).toContain('"Test API"');
+    expect(collectionContent).toContain("name: Test API");
     expect(collectionContent).toContain("version: 1.0.0");
     expect(collectionContent).toContain("auth {");
     expect(collectionContent).toContain("mode: bearer");

@@ -49,7 +49,7 @@ describe("auth-generator", () => {
       expect(result).toContain("auth:oauth2");
       expect(result).toContain("grant_type: authorization_code");
       expect(result).toContain("client_id: {{oauth2ClientId}}");
-      expect(result).toContain('scope: "Read access Write access"');
+      expect(result).toContain("scope: Read access Write access");
     });
 
     it("generates OIDC auth block with placeholder URLs", () => {
@@ -60,7 +60,7 @@ describe("auth-generator", () => {
       const result = generateAuthBlock(scheme, "oidc");
       expect(result).toContain("auth:oauth2");
       expect(result).toContain("authorization_url: {{oidcAuthorizationUrl}}");
-      expect(result).toContain('scope: "openid profile email"');
+      expect(result).toContain("scope: openid profile email");
       expect(result).toContain("pkce: true");
     });
   });

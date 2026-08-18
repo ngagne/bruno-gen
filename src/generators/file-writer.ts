@@ -3,7 +3,7 @@
  * Writes to temp file first, then renames to avoid partial output.
  */
 
-import { mkdir, writeFile, rename, readFile } from "fs/promises";
+import { mkdir, writeFile, rename, readFile, rm } from "fs/promises";
 import { dirname, join } from "path";
 import { tmpdir } from "os";
 import { randomUUID } from "crypto";
@@ -53,11 +53,15 @@ async function writeBruFile(content: string, outputPath: string): Promise<WriteR
 }
 
 /**
- * Create the full directory structure for a Bruno collection.
+ * Create the full directory structure for a Bruno collection, optionally
+ * removing a previous generated collection first.
  * Note: Does NOT create environments/ — that is created on-demand
  * only when there are meaningful environment variables to write.
  */
-async function prepareOutputDir(outputDir: string): Promise<void> {
+async function prepareOutputDir(outputDir: string, options?: { clean?: boolean }): Promise<void> {
+  if (options?.clean) {
+    await rm(outputDir, { recursive: true, force: true });
+  }
   await ensureDir(outputDir);
 }
 

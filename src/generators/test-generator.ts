@@ -15,7 +15,7 @@
 import type { ResponseIR } from "../ir/index.js";
 
 /**
- * Generate a complete post-response block for all responses.
+ * Generate a complete Bruno tests block for all responses.
  * Returns empty string if no eligible responses found.
  */
 function generatePostResponseTests(responses: ResponseIR[]): string {
@@ -40,17 +40,18 @@ function generatePostResponseTests(responses: ResponseIR[]): string {
       continue;
     }
 
-    // Build the test section for this response
+    // Build a Bruno test for this response.
     const statusLabel = response.description ? `${statusCode} ${response.description}` : statusCode;
-    testSections.push(`res.setStatusLabel("${escapeQuotes(statusLabel)}");`);
-    testSections.push(...assertions);
+    testSections.push(`test("${escapeQuotes(statusLabel)}", function() {`);
+    testSections.push(...assertions.map((assertion) => `  ${assertion}`));
+    testSections.push("});");
   }
 
   if (testSections.length === 0) {
     return "";
   }
 
-  return formatBlock("post-response", testSections.join("\n"));
+  return formatBlock("tests", testSections.join("\n"));
 }
 
 /**
@@ -64,14 +65,14 @@ function generateAssertions(
 
   // Tier 1: Status code assertion
   assertions.push(
-    `expect(res.getStatus()).to.equal(${response.statusCode}, "expected status ${response.statusCode}");`,
+    `expect(res.status).to.equal(${response.statusCode}, "expected status ${response.statusCode}");`,
   );
 
   // Tier 2: Required fields presence
   const requiredFields = getRequiredFields(mediaType);
   for (const field of requiredFields) {
     assertions.push(
-      `expect(res.getBody()).to.have.property("${escapeQuotes(field)}", "required field '${escapeQuotes(field)}' missing");`,
+      `expect(res.body).to.have.property("${escapeQuotes(field)}", "required field '${escapeQuotes(field)}' missing");`,
     );
   }
 
@@ -102,7 +103,7 @@ function generateExampleAssertions(
     if (firstKey) {
       const exampleValue = (mediaType.example as Record<string, unknown>)[firstKey];
       assertions.push(
-        `expect(res.getBody().${firstKey}).to.equal(${formatExpectedValue(exampleValue)}, "expected example value '${escapeQuotes(String(exampleValue))}'");`,
+        `expect(res.body.${firstKey}).to.equal(${formatExpectedValue(exampleValue)}, "expected example value '${escapeQuotes(String(exampleValue))}'");`,
       );
     }
   }
@@ -119,7 +120,7 @@ function generateExampleAssertions(
       if (firstKey) {
         const exampleValue = (firstExample.value as Record<string, unknown>)[firstKey];
         assertions.push(
-          `expect(res.getBody().${firstKey}).to.equal(${formatExpectedValue(exampleValue)}, "expected example value '${escapeQuotes(String(exampleValue))}'");`,
+          `expect(res.body.${firstKey}).to.equal(${formatExpectedValue(exampleValue)}, "expected example value '${escapeQuotes(String(exampleValue))}'");`,
         );
       }
     }

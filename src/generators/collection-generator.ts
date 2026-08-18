@@ -24,21 +24,26 @@ function generateCollectionBru(ir: CollectionIR, options?: CollectionBruOptions)
 
   // Meta block
   const metaEntries: Record<string, unknown> = {
+    type: "collection",
     name: ir.info.title,
     version: ir.info.version,
   };
   blocks.push(formatBlock("meta", metaEntries));
 
   // Auth mode block
-  const authMode = options?.authMode || generateAuthMode(ir.securitySchemes);
+  const defaultSchemeName = getDefaultSecuritySchemeName(ir);
+  const authMode =
+    options?.authMode ||
+    generateAuthMode(
+      defaultSchemeName ? { [defaultSchemeName]: ir.securitySchemes[defaultSchemeName] } : {},
+    );
   blocks.push(formatBlock("auth", { mode: authMode }));
 
   // Auth config block (if not "none")
-  if (authMode !== "none" && Object.keys(ir.securitySchemes).length > 0) {
-    const firstSchemeName = Object.keys(ir.securitySchemes)[0];
-    const firstScheme = ir.securitySchemes[firstSchemeName];
+  if (authMode !== "none" && defaultSchemeName) {
+    const firstScheme = ir.securitySchemes[defaultSchemeName];
     // Generate auth config based on scheme type
-    const authConfigBlock = generateAuthConfigBlock(firstScheme, firstSchemeName);
+    const authConfigBlock = generateAuthConfigBlock(firstScheme, defaultSchemeName);
     if (authConfigBlock) {
       blocks.push(authConfigBlock);
     }
@@ -145,6 +150,13 @@ export {
   generateCollectionVars,
 };
 export type { CollectionBruOptions };
+
+/** Return the first scheme explicitly required at collection scope. */
+function getDefaultSecuritySchemeName(ir: CollectionIR): string | undefined {
+  const requirement = ir.defaultSecurity[0];
+  if (!requirement) return undefined;
+  return Object.keys(requirement).find((name) => ir.securitySchemes[name] !== undefined);
+}
 
 /**
  * Generate collection-level vars block (baseUrl).
