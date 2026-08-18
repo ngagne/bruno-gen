@@ -50,18 +50,15 @@ export function validateGraphQL(sdl: string, source: string): ValidationResult {
     gqlParse(sdl);
 
     // Build schema and validate
-    const schema = buildSchema(sdl, { assumeValid: true });
+    const schema = buildSchema(sdl);
     const validationErrors = validateSchema(schema);
 
     for (const err of validationErrors) {
-      // Skip errors that are just warnings (assumeValid swallows some)
-      if (err.message.includes("Unknown type")) {
-        errors.push({
-          file: source,
-          message: err.message,
-          code: "GRAPHQL_VALIDATION_ERROR",
-        });
-      }
+      errors.push({
+        file: source,
+        message: err.message,
+        code: "GRAPHQL_VALIDATION_ERROR",
+      });
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

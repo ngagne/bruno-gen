@@ -9,6 +9,7 @@ import { generateExample } from "./example-generator.js";
 import { generateAuthBlock, getEndpointAuthMode } from "./auth-generator.js";
 import { generateResponseDocs } from "./response-examples.js";
 import { generatePostResponseTests } from "./test-generator.js";
+import { generateGraphQLBody } from "./graphql-generator.js";
 
 interface RequestBruOptions {
   /** Request ordering sequence number. */
@@ -78,7 +79,7 @@ function generateRequestBru(
   }
 
   // Request body
-  if (endpoint.requestBody) {
+  if (endpoint.graphql || endpoint.requestBody) {
     const bodyBlock = generateBody(endpoint);
     if (bodyBlock) {
       blocks.push(bodyBlock);
@@ -113,7 +114,9 @@ function generateMethodBlock(endpoint: EndpointIR, baseUrl: string): string {
 
   // Determine body type
   let bodyType = "none";
-  if (endpoint.requestBody) {
+  if (endpoint.graphql) {
+    bodyType = "graphql";
+  } else if (endpoint.requestBody) {
     const contentTypes = Object.keys(endpoint.requestBody.content);
     if (contentTypes.includes("application/json")) {
       bodyType = "json";
@@ -277,6 +280,10 @@ function generateRequestAuthBlock(endpoint: EndpointIR, collection: CollectionIR
  * Generate body block (body:json, body:graphql, etc.).
  */
 function generateBody(endpoint: EndpointIR): string | null {
+  if (endpoint.graphql) {
+    return generateGraphQLBody(endpoint.graphql);
+  }
+
   if (!endpoint.requestBody) {
     return null;
   }

@@ -45,7 +45,7 @@ export class GraphQLParser {
     let schema: GraphQLSchema;
     try {
       gqlParse(sdl);
-      schema = buildSchema(sdl, { assumeValid: true });
+      schema = buildSchema(sdl);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       throw new Error(`Failed to parse GraphQL SDL: ${message}`);
@@ -86,12 +86,16 @@ export class GraphQLParser {
     for (const [typeName, type] of Object.entries(typeMap)) {
       // Skip built-in types
       if (typeName.startsWith("__")) continue;
-      if (
-        ["String", "Int", "Float", "Boolean", "ID", "Query", "Mutation", "Subscription"].includes(
-          typeName,
-        )
-      )
-        continue;
+      if (["String", "Int", "Float", "Boolean", "ID"].includes(typeName)) continue;
+
+      const rootTypes = [
+        schema.getQueryType(),
+        schema.getMutationType(),
+        schema.getSubscriptionType(),
+      ]
+        .filter((type): type is NonNullable<typeof type> => type !== undefined)
+        .map((type) => type.name);
+      if (rootTypes.includes(typeName)) continue;
 
       const schemaIR = mapGraphQLTypeToSchema(type);
       if (schemaIR) {
@@ -104,7 +108,7 @@ export class GraphQLParser {
         title: "GraphQL API",
         version: "1.0.0",
       },
-      servers: [{ url: "/graphql", description: "GraphQL endpoint", variables: {} }],
+      servers: [{ url: "http://localhost:4000", description: "GraphQL endpoint", variables: {} }],
       securitySchemes: {},
       defaultSecurity: [],
       tags: [

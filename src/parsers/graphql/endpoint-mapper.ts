@@ -1,6 +1,6 @@
 import type { EndpointIR, GraphQLEndpointExtension, GraphQlArgumentIR } from "../../ir/index.js";
 import type { GraphQLArgument, GraphQLField, GraphQLSchema, GraphQLOutputType } from "graphql";
-import { isNonNullType } from "graphql";
+import { getNamedType, isCompositeType, isNonNullType } from "graphql";
 import { mapGraphQLOutputTypeToSchema, mapGraphQLTypeToSchemaField } from "./schema-mapper.js";
 
 /**
@@ -100,12 +100,14 @@ function createEndpointFromField(
       (arg: GraphQLArgument): GraphQlArgumentIR => ({
         name: arg.name,
         type: mapGraphQLTypeToSchemaField(arg.type),
+        graphqlType: arg.type.toString(),
         defaultValue: arg.defaultValue,
         description: arg.description || undefined,
         directives: [],
       }),
     ),
     returnType,
+    selectionSet: createSelectionSet(field.type as GraphQLOutputType),
     description: field.description || undefined,
     directives: [],
   };
@@ -123,8 +125,33 @@ function createEndpointFromField(
     responses,
     producesContentType: "application/json",
     consumesContentTypes: ["application/json"],
+    graphql: extension,
     extensions: {
       graphql: extension,
     },
   };
+}
+
+function createSelectionSet(
+  type: GraphQLOutputType,
+  depth = 0,
+  visited = new Set<string>(),
+): string {
+  const namedType = getNamedType(type);
+  if (!isCompositeType(namedType)) return "";
+  if (depth >= 4 || visited.has(namedType.name)) return "{ __typename }";
+
+  const nextVisited = new Set(visited).add(namedType.name);
+  const fields = Object.values(namedType.getFields())
+    .filter((field) =>
+      field.args.every(
+        (argument) => !isNonNullType(argument.type) || argument.defaultValue !== undefined,
+      ),
+    )
+    .map((field) => {
+      const selection = createSelectionSet(field.type, depth + 1, nextVisited);
+      return `${field.name}${selection ? ` ${selection}` : ""}`;
+    });
+
+  return fields.length > 0 ? `{ ${fields.join(" ")} }` : "{ __typename }";
 }

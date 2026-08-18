@@ -23,21 +23,32 @@ import {
 /**
  * Map GraphQL types to SchemaIR for the components.schemas registry.
  */
-export function mapGraphQLTypeToSchema(type: GraphQLType): SchemaIR | null {
+export function mapGraphQLTypeToSchema(
+  type: GraphQLType,
+  visited = new Set<string>(),
+): SchemaIR | null {
   if (isScalarType(type)) {
     return mapScalarType(type);
   }
   if (isObjectType(type)) {
-    return mapObjectType(type);
+    return visited.has(type.name)
+      ? { type: "object", title: type.name }
+      : mapObjectType(type, new Set(visited).add(type.name));
   }
   if (isInputObjectType(type)) {
-    return mapInputObjectType(type);
+    return visited.has(type.name)
+      ? { type: "object", title: type.name }
+      : mapInputObjectType(type, new Set(visited).add(type.name));
   }
   if (isInterfaceType(type)) {
-    return mapInterfaceType(type);
+    return visited.has(type.name)
+      ? { type: "object", title: type.name }
+      : mapInterfaceType(type, new Set(visited).add(type.name));
   }
   if (isUnionType(type)) {
-    return mapUnionType(type);
+    return visited.has(type.name)
+      ? { type: "object", title: type.name }
+      : mapUnionType(type, new Set(visited).add(type.name));
   }
   if (isEnumType(type)) {
     return mapEnumType(type);
@@ -50,18 +61,21 @@ export function mapGraphQLTypeToSchema(type: GraphQLType): SchemaIR | null {
  * Map a GraphQL type (used in fields/args) to SchemaIR.
  * Handles wrapping types (NonNull, List).
  */
-export function mapGraphQLTypeToSchemaField(type: GraphQLType): SchemaIR {
+export function mapGraphQLTypeToSchemaField(
+  type: GraphQLType,
+  visited = new Set<string>(),
+): SchemaIR {
   if (isNonNullType(type)) {
-    return mapGraphQLTypeToSchemaField(type.ofType);
+    return mapGraphQLTypeToSchemaField(type.ofType, visited);
   }
   if (isListType(type)) {
     return {
       type: "array",
-      items: mapGraphQLTypeToSchemaField(type.ofType),
+      items: mapGraphQLTypeToSchemaField(type.ofType, visited),
     };
   }
 
-  return mapGraphQLTypeToSchema(type) || { type: "string" };
+  return mapGraphQLTypeToSchema(type, visited) || { type: "string" };
 }
 
 function mapScalarType(type: GraphQLScalarType): SchemaIR {
@@ -82,13 +96,13 @@ function mapScalarType(type: GraphQLScalarType): SchemaIR {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function mapObjectType(type: GraphQLObjectType<any, any>): SchemaIR {
+function mapObjectType(type: GraphQLObjectType<any, any>, visited: Set<string>): SchemaIR {
   const fields = type.getFields();
   const properties: Record<string, SchemaIR> = {};
   const required: string[] = [];
 
   for (const [name, field] of Object.entries(fields)) {
-    properties[name] = mapGraphQLTypeToSchemaField(field.type);
+    properties[name] = mapGraphQLTypeToSchemaField(field.type, visited);
     if (isNonNullType(field.type)) {
       required.push(name);
     }
@@ -103,13 +117,13 @@ function mapObjectType(type: GraphQLObjectType<any, any>): SchemaIR {
   };
 }
 
-function mapInputObjectType(type: GraphQLInputObjectType): SchemaIR {
+function mapInputObjectType(type: GraphQLInputObjectType, visited: Set<string>): SchemaIR {
   const fields = type.getFields();
   const properties: Record<string, SchemaIR> = {};
   const required: string[] = [];
 
   for (const [name, field] of Object.entries(fields)) {
-    properties[name] = mapGraphQLTypeToSchemaField(field.type);
+    properties[name] = mapGraphQLTypeToSchemaField(field.type, visited);
     if (isNonNullType(field.type)) {
       required.push(name);
     }
@@ -124,13 +138,13 @@ function mapInputObjectType(type: GraphQLInputObjectType): SchemaIR {
   };
 }
 
-function mapInterfaceType(type: GraphQLInterfaceType): SchemaIR {
+function mapInterfaceType(type: GraphQLInterfaceType, visited: Set<string>): SchemaIR {
   const fields = type.getFields();
   const properties: Record<string, SchemaIR> = {};
   const required: string[] = [];
 
   for (const [name, field] of Object.entries(fields)) {
-    properties[name] = mapGraphQLTypeToSchemaField(field.type);
+    properties[name] = mapGraphQLTypeToSchemaField(field.type, visited);
     if (isNonNullType(field.type)) {
       required.push(name);
     }
@@ -145,10 +159,10 @@ function mapInterfaceType(type: GraphQLInterfaceType): SchemaIR {
   };
 }
 
-function mapUnionType(type: GraphQLUnionType): SchemaIR {
+function mapUnionType(type: GraphQLUnionType, visited: Set<string>): SchemaIR {
   const types = type.getTypes();
   return {
-    oneOf: types.map((t) => mapGraphQLTypeToSchema(t) || { type: "object" }),
+    oneOf: types.map((t) => mapGraphQLTypeToSchema(t, visited) || { type: "object" }),
   };
 }
 

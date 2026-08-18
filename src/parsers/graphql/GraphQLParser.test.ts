@@ -58,7 +58,7 @@ describe("GraphQLParser", () => {
 
       expect(ir.info.title).toBe("GraphQL API");
       expect(ir.servers).toHaveLength(1);
-      expect(ir.servers[0].url).toBe("/graphql");
+      expect(ir.servers[0].url).toBe("http://localhost:4000");
       expect(ir.endpoints).toHaveLength(2);
       expect(ir.endpoints[0].id).toBe("users");
       expect(ir.endpoints[0].method).toBe("post");
@@ -133,6 +133,31 @@ describe("GraphQLParser", () => {
       expect(ir.components.schemas).toHaveProperty("Role");
       expect(ir.components.schemas.Role.type).toBe("string");
       expect(ir.components.schemas.Role.enum).toEqual(["ADMIN", "USER", "GUEST"]);
+    });
+
+    it("does not select nested fields that require arguments", async () => {
+      const ir = await parser.parse({
+        content: `
+          type User {
+            id: ID!
+            displayName(locale: String!): String!
+          }
+          type Query { user: User }
+        `,
+      });
+
+      expect(ir.endpoints[0].graphql?.selectionSet).toBe("{ id }");
+    });
+
+    it("uses __typename to keep recursive result types selectable", async () => {
+      const ir = await parser.parse({
+        content: `
+          type User { friend: User }
+          type Query { user: User }
+        `,
+      });
+
+      expect(ir.endpoints[0].graphql?.selectionSet).toBe("{ friend { __typename } }");
     });
   });
 });

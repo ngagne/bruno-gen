@@ -1,0 +1,36 @@
+"""A representative schema used to verify GraphQL collection generation."""
+schema {
+  query: Query
+  mutation: Mutation
+}
+
+type Query {
+  user(id: ID!): User
+  users(filter: UserFilter): [User!]!
+}
+
+type Mutation {
+  createUser(input: CreateUserInput!): User!
+}
+
+type User {
+  id: ID!
+  name: String!
+  email: String
+  organization: Organization
+}
+
+type Organization {
+  id: ID!
+  name: String!
+}
+
+input UserFilter {
+  search: String
+  limit: Int = 20
+}
+
+input CreateUserInput {
+  name: String!
+  email: String!
+}

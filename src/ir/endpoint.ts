@@ -2,6 +2,7 @@ import type { ParameterIR } from "./parameter.js";
 import type { RequestBodyIR } from "./request-body.js";
 import type { ResponseIR } from "./response.js";
 import type { SecurityRequirement } from "./security.js";
+import type { GraphQLEndpointExtension } from "./graphql.js";
 
 /** Supported HTTP methods in the Bruno DSL. */
 type HttpMethod = "get" | "post" | "put" | "patch" | "delete" | "head" | "options" | "trace";
@@ -37,6 +38,12 @@ interface EndpointIR {
   producesContentType?: string;
   /** Content types this endpoint accepts. */
   consumesContentTypes: string[];
+
+  /** GraphQL operation metadata used to render a Bruno GraphQL request. */
+  graphql?: GraphQLEndpointExtension;
+
+  /** Source-format metadata retained for consumers that need it. */
+  extensions?: Record<string, unknown>;
 }
 
 export type { EndpointIR, HttpMethod };

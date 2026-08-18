@@ -10,7 +10,7 @@ gen-bruno ./openapi.yaml ./output
 
 - **OpenAPI 3.x** — Full support for paths, parameters, request bodies, responses, and examples
 - **Swagger 2.0** — Legacy Swagger specs automatically normalized and converted
-- **GraphQL** — SDL schemas converted to Bruno collections with query/mutation folders
+- **GraphQL** — SDL schemas converted to executable Bruno GraphQL requests, grouped into query/mutation folders
 - **Authentication** — Bearer, Basic, API Key, OAuth2, and OpenID Connect security schemes
 - **Examples** — Preserves spec examples and auto-generates placeholder values from schemas
 - **Folder grouping** — Organize by tags, URL paths, or flat structure
@@ -142,6 +142,10 @@ const ir = await parse("./swagger.json");
 // GraphQL SDL
 const ir = await parse("./schema.graphql");
 ```
+
+### GraphQL output
+
+Each root `Query` and `Mutation` field becomes a `POST /graphql` request. Generated requests use Bruno's native `body:graphql` and `body:graphql:vars` blocks, with an operation document, typed variables, and a schema-derived response selection. The collection defaults `baseUrl` to `http://localhost:4000`; update it in Bruno to match your API server.
 
 Returns a `CollectionIR` object with normalized endpoints, parameters, security schemes, and response schemas.
 

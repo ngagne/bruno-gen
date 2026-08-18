@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-08-18
+
+### Added
+
+- GraphQL SDL files now generate executable Bruno GraphQL requests, including native query and variables blocks for every query and mutation.
+- GraphQL fixture and compatibility coverage that validates generated collections with Bruno's parser and validates generated operations against the source schema.
+
+### Fixed
+
+- GraphQL schema loading, nested selections with required arguments, and recursive schema mapping.
+
 ## [1.2.0] - 2026-08-18
 
 ### Added

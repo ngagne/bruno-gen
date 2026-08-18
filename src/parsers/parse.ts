@@ -8,6 +8,7 @@ import { SwaggerParser } from "./swagger/SwaggerParser.js";
 import { GraphQLParser } from "./graphql/GraphQLParser.js";
 import { DirectoryParser } from "./graphql/DirectoryParser.js";
 import fs from "node:fs";
+import path from "node:path";
 
 /**
  * Unified parse function — auto-detects format and parses.
@@ -30,6 +31,10 @@ export async function parse(
     if (stat.isDirectory()) {
       const dirParser = new DirectoryParser();
       return dirParser.parse({ dirPath: specInput.filePath });
+    }
+
+    if (isGraphQLFile(specInput.filePath)) {
+      return new GraphQLParser().parse(specInput);
     }
   }
 
@@ -77,6 +82,10 @@ export async function validate(input: SpecInput | string): Promise<ValidationRes
       const dirParser = new DirectoryParser();
       return dirParser.validate({ dirPath: specInput.filePath });
     }
+
+    if (isGraphQLFile(specInput.filePath)) {
+      return new GraphQLParser().validate(specInput);
+    }
   }
 
   let data: Record<string, unknown>;
@@ -117,4 +126,9 @@ export async function validate(input: SpecInput | string): Promise<ValidationRes
         warnings: [],
       };
   }
+}
+
+function isGraphQLFile(filePath: string): boolean {
+  const extension = path.extname(filePath).toLowerCase();
+  return extension === ".graphql" || extension === ".gql";
 }

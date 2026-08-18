@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { generateRequestBru } from "../request-generator.js";
 import type { EndpointIR, CollectionIR } from "../../ir/index.js";
+import { bruToJsonV2 } from "@usebruno/lang";
 
 function makeEndpoint(overrides: Partial<EndpointIR> = {}): EndpointIR {
   return {
@@ -168,6 +169,40 @@ describe("request-generator", () => {
 
       expect(result).toContain("res.body.id");
       expect(result).toContain("42");
+    });
+
+    it("renders GraphQL metadata as Bruno GraphQL query and variables blocks", () => {
+      const endpoint = makeEndpoint({
+        id: "user",
+        method: "post",
+        path: "/graphql",
+        graphql: {
+          operationType: "query",
+          operationName: "user",
+          description: undefined,
+          directives: [],
+          arguments: [
+            {
+              name: "id",
+              graphqlType: "ID!",
+              type: { type: "string" },
+              directives: [],
+            },
+          ],
+          returnType: { type: "object", properties: { id: { type: "string" } } },
+        },
+      });
+
+      const result = generateRequestBru(endpoint, makeCollection(), { seq: 1 });
+      const request = bruToJsonV2(result) as {
+        http: { body: string };
+        body: { graphql: { query: string; variables: string } };
+      };
+
+      expect(request.http.body).toBe("graphql");
+      expect(request.body.graphql.query).toContain("query user($id: ID!)");
+      expect(request.body.graphql.query).toContain("user(id: $id) { id }");
+      expect(JSON.parse(request.body.graphql.variables)).toHaveProperty("id");
     });
   });
 });

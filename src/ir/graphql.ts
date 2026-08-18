@@ -6,6 +6,8 @@ interface GraphQLEndpointExtension {
   operationName: string;
   arguments: GraphQlArgumentIR[];
   returnType: SchemaIR;
+  /** Precomputed selection set that excludes fields requiring arguments. */
+  selectionSet?: string;
   description?: string;
   directives: string[];
 }
@@ -14,6 +16,8 @@ interface GraphQLEndpointExtension {
 interface GraphQlArgumentIR {
   name: string;
   type: SchemaIR;
+  /** GraphQL type syntax, preserving list and non-null wrappers for variables. */
+  graphqlType?: string;
   defaultValue?: unknown;
   description?: string;
   directives: string[];
