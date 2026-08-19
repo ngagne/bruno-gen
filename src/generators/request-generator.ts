@@ -41,7 +41,7 @@ function generateRequestBru(
   // Meta block
   const metaEntries: Record<string, unknown> = {
     name: endpoint.id,
-    type: endpoint.grpc ? "grpc" : "http",
+    type: endpoint.grpc ? "grpc" : endpoint.websocket ? "ws" : "http",
     seq,
   };
   if (endpoint.tags && endpoint.tags.length > 0) {
@@ -55,7 +55,9 @@ function generateRequestBru(
   // HTTP method block
   const methodBlock = endpoint.grpc
     ? generateGrpcBlock(endpoint, baseUrl, options?.grpcProtoPath)
-    : generateMethodBlock(endpoint, baseUrl);
+    : endpoint.websocket
+      ? generateWebSocketBlock(baseUrl)
+      : generateMethodBlock(endpoint, baseUrl);
   blocks.push(methodBlock);
 
   // Path parameters
@@ -83,7 +85,7 @@ function generateRequestBru(
   }
 
   // Request body
-  if (endpoint.grpc || endpoint.graphql || endpoint.requestBody) {
+  if (endpoint.grpc || endpoint.graphql || endpoint.websocket || endpoint.requestBody) {
     const bodyBlock = generateBody(endpoint);
     if (bodyBlock) {
       blocks.push(bodyBlock);
@@ -164,6 +166,11 @@ function generateGrpcBlock(endpoint: EndpointIR, baseUrl: string, protoPath?: st
     auth: "inherit",
     methodType: endpoint.grpc.methodType,
   });
+}
+
+/** Generate Bruno's native WebSocket connection block. */
+function generateWebSocketBlock(baseUrl: string): string {
+  return formatBlock("ws", { url: baseUrl });
 }
 
 /**
@@ -308,6 +315,9 @@ function generateBody(endpoint: EndpointIR): string | null {
   if (endpoint.graphql) {
     return generateGraphQLBody(endpoint.graphql);
   }
+  if (endpoint.websocket) {
+    return endpoint.websocket.messages.map(generateWebSocketMessage).join("\n\n");
+  }
 
   if (!endpoint.requestBody) {
     return null;
@@ -358,6 +368,18 @@ function generateBody(endpoint: EndpointIR): string | null {
   }
 
   return formatBlockWithContent(blockType, bodyContent);
+}
+
+function generateWebSocketMessage(
+  message: NonNullable<EndpointIR["websocket"]>["messages"][number],
+): string {
+  const content = message.content
+    .split("\n")
+    .map((line) => `    ${line}`)
+    .join("\n")
+    .replace(/'''/g, "\\'\\'\\'");
+  const selected = message.selected ? "\n  selected: true" : "";
+  return `body:ws {\n  name: ${serializeValue(message.name)}\n  type: ${message.type}${selected}\n  content: '''\n${content}\n  '''\n}`;
 }
 
 function extractFormData(
@@ -428,11 +450,13 @@ export {
   generateRequestBru,
   generateMethodBlock,
   generateGrpcBlock,
+  generateWebSocketBlock,
   buildUrl,
   generatePathParams,
   generateQueryParams,
   generateHeaders,
   generateBody,
+  generateWebSocketMessage,
   generateRequestDocs,
 };
 export type { RequestBruOptions };

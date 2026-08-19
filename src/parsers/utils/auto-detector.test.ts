@@ -11,6 +11,10 @@ describe("auto-detector", () => {
     expect(detectFormat({ swagger: "2.0" })).toBe("swagger");
   });
 
+  it("detects AsyncAPI from content field", () => {
+    expect(detectFormat({ asyncapi: "3.0.0" })).toBe("asyncapi");
+  });
+
   it("detects GraphQL from file extension", () => {
     expect(detectFormat({}, "schema.graphql")).toBe("graphql");
     expect(detectFormat({}, "schema.gql")).toBe("graphql");

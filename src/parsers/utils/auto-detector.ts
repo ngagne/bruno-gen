@@ -4,7 +4,7 @@
 
 import path from "node:path";
 
-export type SpecFormat = "openapi" | "swagger" | "graphql" | "grpc" | "unknown";
+export type SpecFormat = "openapi" | "swagger" | "graphql" | "grpc" | "asyncapi" | "unknown";
 
 /**
  * Detect the spec format from file extension and/or content.
@@ -27,7 +27,15 @@ export function detectFormat(data: Record<string, unknown>, filePath?: string): 
     }
   }
 
+  if (typeof data === "string" && /^\s*asyncapi:\s*[23]\./m.test(data)) {
+    return "asyncapi";
+  }
+
   // Step 2: Check content fields
+  if (typeof data.asyncapi === "string" && /^(2|3)\./.test(data.asyncapi)) {
+    return "asyncapi";
+  }
+
   if (typeof data.openapi === "string") {
     const version = data.openapi as string;
     if (version.startsWith("3.")) {

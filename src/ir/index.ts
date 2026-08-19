@@ -42,5 +42,8 @@ export type { GraphQLEndpointExtension, GraphQlArgumentIR } from "./graphql.js";
 // ─── gRPC ──────────────────────────────────────────────────────────────────
 export type { GrpcEndpointExtension } from "./grpc.js";
 
+// ─── WebSocket ─────────────────────────────────────────────────────────────
+export type { WebSocketEndpointExtension, WebSocketMessageIR } from "./websocket.js";
+
 // ─── Validation ────────────────────────────────────────────────────────────
 export type { ValidationError, ValidationResult, Warning, WarningSeverity } from "./validation.js";

@@ -12,6 +12,7 @@ export { SwaggerParser } from "./swagger/SwaggerParser.js";
 export { GraphQLParser } from "./graphql/GraphQLParser.js";
 export { DirectoryParser } from "./graphql/DirectoryParser.js";
 export { GrpcParser } from "./grpc/GrpcParser.js";
+export { AsyncApiParser } from "./asyncapi/AsyncApiParser.js";
 
 // Utilities
 export { detectFormat } from "./utils/auto-detector.js";

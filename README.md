@@ -1,6 +1,6 @@
 # gen-bruno
 
-Convert OpenAPI 3.x, Swagger 2.0, GraphQL schemas, and gRPC Protocol Buffer specs into fully functional Bruno API collections with one command. Available as a CLI tool and a programmatic JavaScript/TypeScript library.
+Convert OpenAPI 3.x, Swagger 2.0, GraphQL schemas, gRPC Protocol Buffer specs, and AsyncAPI WebSocket specs into fully functional Bruno API collections with one command. Available as a CLI tool and a programmatic JavaScript/TypeScript library.
 
 ```bash
 gen-bruno ./openapi.yaml ./output
@@ -12,6 +12,7 @@ gen-bruno ./openapi.yaml ./output
 - **Swagger 2.0** — Legacy Swagger specs automatically normalized and converted
 - **GraphQL** — SDL schemas converted to executable Bruno GraphQL requests, grouped into query/mutation folders
 - **gRPC** — `.proto` service definitions converted to native Bruno gRPC requests, including streaming modes
+- **AsyncAPI WebSockets** — AsyncAPI 2.x and 3.x `ws`/`wss` servers converted to native Bruno WebSocket requests and message bodies
 - **Authentication** — Bearer, Basic, API Key, OAuth2, and OpenID Connect security schemes
 - **Examples** — Preserves spec examples and auto-generates placeholder values from schemas
 - **Folder grouping** — Organize by tags, URL paths, or flat structure
@@ -56,7 +57,7 @@ gen-bruno [spec] [output] [options]
 
 | Flag | Description | Default |
 |------|-------------|---------|
-| `<spec>` | Path to OpenAPI, Swagger, GraphQL, or gRPC `.proto` spec file | _(required)_ |
+| `<spec>` | Path to an OpenAPI, Swagger, GraphQL, gRPC `.proto`, or AsyncAPI WebSocket spec file | _(required)_ |
 | `[output]` | Output directory for the Bruno collection | `./bruno-output` |
 | `--format <tag\|path\|flat>` | Folder grouping strategy | `tag` |
 | `--tests` | Generate post-response test assertions | off |
@@ -75,6 +76,9 @@ gen-bruno ./schema.graphql ./output --tests
 
 # Protocol Buffer service definition → native Bruno gRPC requests
 gen-bruno ./greeter.proto ./output
+
+# AsyncAPI WebSocket specification → native Bruno WebSocket requests
+gen-bruno ./chat.asyncapi.yaml ./output
 
 # Dry run to preview parsed spec
 gen-bruno ./openapi.yaml ./output --dry-run
@@ -132,7 +136,7 @@ console.log(`Generated ${result.filesWritten.length} files`);
 
 ### `parse(input)`
 
-Unified spec parser. Accepts file paths to OpenAPI 3.x YAML/JSON, Swagger 2.0, GraphQL SDL, or gRPC Protocol Buffer (`.proto`) files.
+Unified spec parser. Accepts file paths to OpenAPI 3.x YAML/JSON, Swagger 2.0, GraphQL SDL, gRPC Protocol Buffer (`.proto`), or AsyncAPI 2.x/3.x WebSocket YAML/JSON files.
 
 ```ts
 import { parse } from "gen-bruno";
@@ -148,6 +152,9 @@ const ir = await parse("./schema.graphql");
 
 // gRPC Protocol Buffer service definition
 const ir = await parse("./greeter.proto");
+
+// AsyncAPI WebSocket document
+const ir = await parse("./chat.asyncapi.yaml");
 ```
 
 ### GraphQL output
@@ -159,6 +166,10 @@ Returns a `CollectionIR` object with normalized endpoints, parameters, security 
 ### gRPC output
 
 Each `service` RPC in a `.proto` file becomes a native Bruno gRPC request. The generated collection includes the input proto at `protos/<filename>` and each request references it with a relative `protoPath`, making the collection portable. The default `baseUrl` is `http://localhost:50051`; update it in Bruno to match your gRPC server. Unary, client-streaming, server-streaming, and bidirectional-streaming RPCs map to Bruno's corresponding request modes.
+
+### AsyncAPI WebSocket output
+
+AsyncAPI 2.x and 3.x documents with `ws` or `wss` servers are supported. Each publish/send and subscribe/receive operation becomes a native Bruno WebSocket request. Send operations include JSON, text, or XML message examples; receive operations create a connection request so the documented server messages can be observed. The collection's `baseUrl` is taken from the first WebSocket server.
 
 ### `CollectionBuilder`
 

@@ -4,6 +4,7 @@ import type { ResponseIR } from "./response.js";
 import type { SecurityRequirement } from "./security.js";
 import type { GraphQLEndpointExtension } from "./graphql.js";
 import type { GrpcEndpointExtension } from "./grpc.js";
+import type { WebSocketEndpointExtension } from "./websocket.js";
 
 /** Supported HTTP methods in the Bruno DSL. */
 type HttpMethod = "get" | "post" | "put" | "patch" | "delete" | "head" | "options" | "trace";
@@ -45,6 +46,9 @@ interface EndpointIR {
 
   /** gRPC operation metadata used to render a native Bruno gRPC request. */
   grpc?: GrpcEndpointExtension;
+
+  /** AsyncAPI metadata used to render a native Bruno WebSocket request. */
+  websocket?: WebSocketEndpointExtension;
 
   /** Source-format metadata retained for consumers that need it. */
   extensions?: Record<string, unknown>;

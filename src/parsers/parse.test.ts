@@ -10,7 +10,7 @@ afterEach(async () =>
 );
 
 describe("unified parser", () => {
-  it("routes inline OpenAPI, Swagger, and GraphQL input", async () => {
+  it("routes inline OpenAPI, Swagger, GraphQL, and AsyncAPI input", async () => {
     await expect(
       parse({ content: { openapi: "3.0.0", info: { title: "Open", version: "1" }, paths: {} } }),
     ).resolves.toMatchObject({ info: { title: "Open" } });
@@ -20,6 +20,12 @@ describe("unified parser", () => {
     await expect(parse({ content: "type Query { ping: String! }" })).resolves.toMatchObject({
       info: { title: "GraphQL API" },
     });
+    await expect(
+      parse({
+        content:
+          "asyncapi: 3.0.0\ninfo: { title: Socket, version: '1' }\nservers: { local: { host: localhost, protocol: ws } }\nchannels: { ping: { address: ping } }\noperations: { sendPing: { action: send, channel: { $ref: '#/channels/ping' } } }",
+      }),
+    ).resolves.toMatchObject({ info: { title: "Socket" } });
   });
 
   it("routes files and GraphQL directories and provides useful unknown-format validation", async () => {

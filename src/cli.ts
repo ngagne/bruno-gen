@@ -35,9 +35,11 @@ function main(): void {
 
   program
     .name("gen-bruno")
-    .description("Convert OpenAPI, Swagger, and GraphQL specs into Bruno API collections")
+    .description(
+      "Convert OpenAPI, Swagger, GraphQL, gRPC, and AsyncAPI specs into Bruno collections",
+    )
     .version(pkg.version, "-V, --version")
-    .argument("[spec]", "Path to OpenAPI, Swagger, or GraphQL spec file")
+    .argument("[spec]", "Path to an OpenAPI, Swagger, GraphQL, gRPC, or AsyncAPI spec file")
     .argument("[output]", "Output directory for the Bruno collection")
     .option("--format <tag|path|flat>", "Folder grouping strategy", "tag")
     .option("--tests", "Generate post-response test assertions")

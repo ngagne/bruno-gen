@@ -8,6 +8,7 @@ import { SwaggerParser } from "./swagger/SwaggerParser.js";
 import { GraphQLParser } from "./graphql/GraphQLParser.js";
 import { DirectoryParser } from "./graphql/DirectoryParser.js";
 import { GrpcParser } from "./grpc/GrpcParser.js";
+import { AsyncApiParser } from "./asyncapi/AsyncApiParser.js";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -69,8 +70,12 @@ export async function parse(
     }
     case "grpc":
       return new GrpcParser().parse(specInput);
+    case "asyncapi":
+      return new AsyncApiParser().parse(specInput);
     default:
-      throw new Error(`Unknown spec format. Could not detect OpenAPI, Swagger, GraphQL, or gRPC.`);
+      throw new Error(
+        `Unknown spec format. Could not detect OpenAPI, Swagger, GraphQL, gRPC, or AsyncAPI.`,
+      );
   }
 }
 
@@ -126,6 +131,8 @@ export async function validate(input: SpecInput | string): Promise<ValidationRes
     }
     case "grpc":
       return new GrpcParser().validate(specInput);
+    case "asyncapi":
+      return new AsyncApiParser().validate(specInput);
     default:
       return {
         valid: false,

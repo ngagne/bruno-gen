@@ -32,6 +32,8 @@ export type {
   SecurityRequirement,
   GraphQLEndpointExtension,
   GraphQlArgumentIR,
+  WebSocketEndpointExtension,
+  WebSocketMessageIR,
   ValidationError,
   ValidationResult,
   Warning,
@@ -48,6 +50,7 @@ export {
   SwaggerParser,
   GraphQLParser,
   DirectoryParser,
+  AsyncApiParser,
 } from "./parsers/index.js";
 export type { SpecParser, ParseOptions, SpecInput } from "./parsers/index.js";
 

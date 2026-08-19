@@ -1,0 +1,53 @@
+asyncapi: 3.0.0
+info:
+  title: Chat WebSocket API
+  version: 1.0.0
+  description: A WebSocket-only chat API.
+servers:
+  production:
+    host: chat.example.com
+    pathname: /socket
+    protocol: wss
+channels:
+  chatMessages:
+    address: chat
+    messages:
+      ChatMessage:
+        $ref: '#/components/messages/ChatMessage'
+operations:
+  sendChatMessage:
+    action: send
+    channel:
+      $ref: '#/channels/chatMessages'
+    messages:
+      - $ref: '#/components/messages/ChatMessage'
+    summary: Send a chat message
+    tags:
+      - name: chat
+  receiveChatMessage:
+    action: receive
+    channel:
+      $ref: '#/channels/chatMessages'
+    messages:
+      - $ref: '#/components/messages/ChatMessage'
+    summary: Receive a chat message
+    tags:
+      - name: chat
+components:
+  messages:
+    ChatMessage:
+      name: chat message
+      contentType: application/json
+      examples:
+        - name: greeting
+          payload:
+            room: general
+            text: Hello from AsyncAPI
+      payload:
+        type: object
+        required: [room, text]
+        properties:
+          room:
+            type: string
+          text:
+            type: string
