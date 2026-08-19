@@ -67,7 +67,6 @@ export class SwaggerParser_ {
 
     return validateOpenAPI(data, source);
   }
-
 }
 
 export { SwaggerParser_ as SwaggerParser };

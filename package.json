@@ -26,9 +26,9 @@
   },
   "scripts": {
     "build": "tsup",
-    "test": "vitest run",
+    "test": "npm run build && vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
+    "test:coverage": "npm run build && vitest run --coverage",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
     "format": "prettier --write src/",

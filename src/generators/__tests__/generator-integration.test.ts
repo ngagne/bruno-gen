@@ -183,7 +183,7 @@ describe("generator integration tests", () => {
     const folderBruPath = join(ungroupedFolder, "folder.bru");
     await expect(readFile(folderBruPath, "utf-8")).rejects.toThrow();
     // Request file should be at root
-    const requestPath = join(ungroupedDir, "HealthCheck.bru");
+    const requestPath = join(ungroupedDir, "healthcheck.bru");
     const requestContent = await readFile(requestPath, "utf-8");
     expect(requestContent).toContain("meta {");
     // collection.bru should have baseUrl in vars
