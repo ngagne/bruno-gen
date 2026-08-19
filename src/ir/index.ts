@@ -39,5 +39,8 @@ export type {
 // ─── GraphQL ───────────────────────────────────────────────────────────────
 export type { GraphQLEndpointExtension, GraphQlArgumentIR } from "./graphql.js";
 
+// ─── gRPC ──────────────────────────────────────────────────────────────────
+export type { GrpcEndpointExtension } from "./grpc.js";
+
 // ─── Validation ────────────────────────────────────────────────────────────
 export type { ValidationError, ValidationResult, Warning, WarningSeverity } from "./validation.js";

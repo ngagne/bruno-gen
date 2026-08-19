@@ -1,7 +1,7 @@
 {
   "name": "gen-bruno",
-  "version": "1.3.0",
-  "description": "Convert OpenAPI, Swagger, and GraphQL specs into Bruno API collections",
+  "version": "1.4.0",
+  "description": "Convert OpenAPI, Swagger, GraphQL, and gRPC specs into Bruno API collections",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -39,6 +39,7 @@
     "openapi",
     "swagger",
     "graphql",
+    "grpc",
     "api",
     "collection",
     "generator",
@@ -80,6 +81,7 @@
     "commander": "^14.0.3",
     "graphql": "^16.13.2",
     "js-yaml": "^4.1.1",
-    "ora": "^9.3.0"
+    "ora": "^9.3.0",
+    "protobufjs": "^7.6.5"
   }
 }

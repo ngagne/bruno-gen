@@ -14,9 +14,10 @@ import { generateFolderGroups } from "./folder-generator.js";
 import { formatBlock } from "./bru-serializer.js";
 import { generateRequestBru } from "./request-generator.js";
 import { sanitizeRequestFilename } from "./path-sanitizer.js";
+import path from "node:path";
 
 type Grouping = "tag" | "path" | "flat";
-type PlannedFileKind = "manifest" | "collection" | "environment" | "folder" | "request";
+type PlannedFileKind = "manifest" | "collection" | "environment" | "folder" | "request" | "proto";
 
 interface CollectionPlanOptions {
   grouping?: Grouping;
@@ -60,6 +61,7 @@ function planCollection(ir: CollectionIR, options: CollectionPlanOptions = {}): 
   }
 
   const usedFilenames = new Set<string>();
+  const plannedProtos = new Map<string, string>();
   for (const group of groups) {
     const directory = group.folderName;
     if (group.folderBru) {
@@ -73,12 +75,26 @@ function planCollection(ir: CollectionIR, options: CollectionPlanOptions = {}): 
 
     for (const [index, endpoint] of group.endpoints.entries()) {
       const filename = sanitizeRequestFilename(endpoint, usedFilenames);
+      const requestPath = joinPath(directory, filename);
+      let grpcProtoPath: string | undefined;
+      if (endpoint.grpc) {
+        const protoOutputPath = `protos/${endpoint.grpc.proto.fileName}`;
+        const existing = plannedProtos.get(protoOutputPath);
+        if (existing !== undefined && existing !== endpoint.grpc.proto.content) {
+          throw new Error(`gRPC proto filename collision: ${endpoint.grpc.proto.fileName}`);
+        }
+        plannedProtos.set(protoOutputPath, endpoint.grpc.proto.content);
+        grpcProtoPath =
+          path.posix.relative(path.posix.dirname(requestPath), protoOutputPath) ||
+          endpoint.grpc.proto.fileName;
+      }
       files.push({
-        relativePath: joinPath(directory, filename),
+        relativePath: requestPath,
         content: generateRequestBru(endpoint, ir, {
           seq: index + 1,
           baseUrl: "{{baseUrl}}",
           generateTests: options.generateTests,
+          grpcProtoPath,
         }),
         kind: "request",
         endpoint,
@@ -89,6 +105,10 @@ function planCollection(ir: CollectionIR, options: CollectionPlanOptions = {}): 
         warnings.push(`Endpoint ${endpoint.id} is deprecated`);
       }
     }
+  }
+
+  for (const [relativePath, content] of plannedProtos) {
+    files.push({ relativePath, content, kind: "proto" });
   }
 
   return { files, warnings };

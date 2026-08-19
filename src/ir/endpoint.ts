@@ -3,6 +3,7 @@ import type { RequestBodyIR } from "./request-body.js";
 import type { ResponseIR } from "./response.js";
 import type { SecurityRequirement } from "./security.js";
 import type { GraphQLEndpointExtension } from "./graphql.js";
+import type { GrpcEndpointExtension } from "./grpc.js";
 
 /** Supported HTTP methods in the Bruno DSL. */
 type HttpMethod = "get" | "post" | "put" | "patch" | "delete" | "head" | "options" | "trace";
@@ -41,6 +42,9 @@ interface EndpointIR {
 
   /** GraphQL operation metadata used to render a Bruno GraphQL request. */
   graphql?: GraphQLEndpointExtension;
+
+  /** gRPC operation metadata used to render a native Bruno gRPC request. */
+  grpc?: GrpcEndpointExtension;
 
   /** Source-format metadata retained for consumers that need it. */
   extensions?: Record<string, unknown>;

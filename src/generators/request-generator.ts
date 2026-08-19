@@ -18,6 +18,8 @@ interface RequestBruOptions {
   baseUrl?: string;
   /** Generate post-response test assertions. */
   generateTests?: boolean;
+  /** Proto file path relative to this request, for native Bruno gRPC requests. */
+  grpcProtoPath?: string;
 }
 
 /**
@@ -39,7 +41,7 @@ function generateRequestBru(
   // Meta block
   const metaEntries: Record<string, unknown> = {
     name: endpoint.id,
-    type: "http",
+    type: endpoint.grpc ? "grpc" : "http",
     seq,
   };
   if (endpoint.tags && endpoint.tags.length > 0) {
@@ -51,7 +53,9 @@ function generateRequestBru(
   blocks.push(formatBlock("meta", metaEntries));
 
   // HTTP method block
-  const methodBlock = generateMethodBlock(endpoint, baseUrl);
+  const methodBlock = endpoint.grpc
+    ? generateGrpcBlock(endpoint, baseUrl, options?.grpcProtoPath)
+    : generateMethodBlock(endpoint, baseUrl);
   blocks.push(methodBlock);
 
   // Path parameters
@@ -79,7 +83,7 @@ function generateRequestBru(
   }
 
   // Request body
-  if (endpoint.graphql || endpoint.requestBody) {
+  if (endpoint.grpc || endpoint.graphql || endpoint.requestBody) {
     const bodyBlock = generateBody(endpoint);
     if (bodyBlock) {
       blocks.push(bodyBlock);
@@ -146,6 +150,20 @@ function generateMethodBlock(endpoint: EndpointIR, baseUrl: string): string {
   };
 
   return formatBlock(endpoint.method, entries);
+}
+
+/** Generate Bruno's native gRPC request block. */
+function generateGrpcBlock(endpoint: EndpointIR, baseUrl: string, protoPath?: string): string {
+  if (!endpoint.grpc)
+    throw new Error("gRPC block requested for an endpoint without gRPC metadata.");
+  return formatBlock("grpc", {
+    url: baseUrl,
+    method: endpoint.grpc.method,
+    body: "grpc",
+    protoPath: protoPath ?? `protos/${endpoint.grpc.proto.fileName}`,
+    auth: "inherit",
+    methodType: endpoint.grpc.methodType,
+  });
 }
 
 /**
@@ -280,6 +298,13 @@ function generateRequestAuthBlock(endpoint: EndpointIR, collection: CollectionIR
  * Generate body block (body:json, body:graphql, etc.).
  */
 function generateBody(endpoint: EndpointIR): string | null {
+  if (endpoint.grpc) {
+    const content = JSON.stringify(endpoint.grpc.requestExample, null, 2)
+      .split("\n")
+      .map((line) => `    ${line}`)
+      .join("\n");
+    return `body:grpc {\n  name: message\n  content: '''\n${content}\n  '''\n}`;
+  }
   if (endpoint.graphql) {
     return generateGraphQLBody(endpoint.graphql);
   }
@@ -402,6 +427,7 @@ function generateSettingsBlock(): string {
 export {
   generateRequestBru,
   generateMethodBlock,
+  generateGrpcBlock,
   buildUrl,
   generatePathParams,
   generateQueryParams,

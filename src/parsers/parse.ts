@@ -7,6 +7,7 @@ import { OpenApiParser } from "./openapi/OpenApiParser.js";
 import { SwaggerParser } from "./swagger/SwaggerParser.js";
 import { GraphQLParser } from "./graphql/GraphQLParser.js";
 import { DirectoryParser } from "./graphql/DirectoryParser.js";
+import { GrpcParser } from "./grpc/GrpcParser.js";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -36,6 +37,7 @@ export async function parse(
     if (isGraphQLFile(specInput.filePath)) {
       return new GraphQLParser().parse(specInput);
     }
+    if (isProtoFile(specInput.filePath)) return new GrpcParser().parse(specInput);
   }
 
   // Load spec if from file
@@ -65,8 +67,10 @@ export async function parse(
       const parser = new GraphQLParser();
       return parser.parse(specInput);
     }
+    case "grpc":
+      return new GrpcParser().parse(specInput);
     default:
-      throw new Error(`Unknown spec format. Could not detect OpenAPI, Swagger, or GraphQL.`);
+      throw new Error(`Unknown spec format. Could not detect OpenAPI, Swagger, GraphQL, or gRPC.`);
   }
 }
 
@@ -86,6 +90,7 @@ export async function validate(input: SpecInput | string): Promise<ValidationRes
     if (isGraphQLFile(specInput.filePath)) {
       return new GraphQLParser().validate(specInput);
     }
+    if (isProtoFile(specInput.filePath)) return new GrpcParser().validate(specInput);
   }
 
   let data: Record<string, unknown>;
@@ -119,6 +124,8 @@ export async function validate(input: SpecInput | string): Promise<ValidationRes
         return validateGraphQL(specInput.content, source);
       }
     }
+    case "grpc":
+      return new GrpcParser().validate(specInput);
     default:
       return {
         valid: false,
@@ -131,4 +138,8 @@ export async function validate(input: SpecInput | string): Promise<ValidationRes
 function isGraphQLFile(filePath: string): boolean {
   const extension = path.extname(filePath).toLowerCase();
   return extension === ".graphql" || extension === ".gql";
+}
+
+function isProtoFile(filePath: string): boolean {
+  return path.extname(filePath).toLowerCase() === ".proto";
 }

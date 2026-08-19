@@ -4,7 +4,7 @@
 
 import path from "node:path";
 
-export type SpecFormat = "openapi" | "swagger" | "graphql" | "unknown";
+export type SpecFormat = "openapi" | "swagger" | "graphql" | "grpc" | "unknown";
 
 /**
  * Detect the spec format from file extension and/or content.
@@ -21,6 +21,9 @@ export function detectFormat(data: Record<string, unknown>, filePath?: string): 
     const ext = path.extname(filePath).toLowerCase();
     if (ext === ".graphql" || ext === ".gql") {
       return "graphql";
+    }
+    if (ext === ".proto") {
+      return "grpc";
     }
   }
 
@@ -43,7 +46,18 @@ export function detectFormat(data: Record<string, unknown>, filePath?: string): 
     return "graphql";
   }
 
+  if (looksLikeProto(data)) return "grpc";
+
   return "unknown";
+}
+
+function looksLikeProto(data: Record<string, unknown>): boolean {
+  const content = typeof data === "string" ? data : data._raw;
+  return (
+    typeof content === "string" &&
+    /\bservice\s+\w+\s*\{/.test(content) &&
+    /\brpc\s+\w+\s*\(/.test(content)
+  );
 }
 
 /**

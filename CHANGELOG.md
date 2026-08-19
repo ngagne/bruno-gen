@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-08-18
+
+### Added
+
+- gRPC Protocol Buffer (`.proto`) parsing and validation, including unary, client-streaming, server-streaming, and bidirectional-streaming RPC methods.
+- Native Bruno gRPC request generation with `grpc` and `body:grpc` blocks, request examples, and portable proto files copied into generated collections.
+- gRPC fixture plus parser and Bruno-language compatibility tests.
+
 ## [1.3.0] - 2026-08-18
 
 ### Added

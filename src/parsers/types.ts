@@ -4,7 +4,7 @@ import type { ValidationResult } from "../ir/validation.js";
 /** Input to a parser — either a file path or raw content string. */
 export type SpecInput =
   | { filePath: string }
-  | { content: string; format?: "openapi" | "swagger" | "graphql" };
+  | { content: string; format?: "openapi" | "swagger" | "graphql" | "grpc" };
 
 /** Options for parsing a spec. */
 export interface ParseOptions {
