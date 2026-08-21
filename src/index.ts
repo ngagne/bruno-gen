@@ -8,6 +8,7 @@ export type {
   ServerVariable,
   Tag,
   EndpointIR,
+  RequestTransport,
   HttpMethod,
   ParameterIR,
   ParameterLocation,

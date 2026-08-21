@@ -1,152 +1,124 @@
 import type { CollectionIR } from "../ir/index.js";
-import type { SpecInput, ParseOptions } from "./types.js";
 import type { ValidationResult } from "../ir/validation.js";
-import { loadSpec } from "./utils/spec-loader.js";
-import { detectFormat } from "./utils/auto-detector.js";
+import { AsyncApiParser } from "./asyncapi/AsyncApiParser.js";
+import { DirectoryParser } from "./graphql/DirectoryParser.js";
+import { GraphQLParser } from "./graphql/GraphQLParser.js";
+import { GrpcParser } from "./grpc/GrpcParser.js";
 import { OpenApiParser } from "./openapi/OpenApiParser.js";
 import { SwaggerParser } from "./swagger/SwaggerParser.js";
-import { GraphQLParser } from "./graphql/GraphQLParser.js";
-import { DirectoryParser } from "./graphql/DirectoryParser.js";
-import { GrpcParser } from "./grpc/GrpcParser.js";
-import { AsyncApiParser } from "./asyncapi/AsyncApiParser.js";
+import type { ParseOptions, SpecInput } from "./types.js";
+import { detectFormat, type SpecFormat } from "./utils/auto-detector.js";
+import { loadSpec } from "./utils/spec-loader.js";
 import fs from "node:fs";
 import path from "node:path";
 
-/**
- * Unified parse function — auto-detects format and parses.
- *
- * @param input - File path or inline content
- * @param options - Parse options
- * @returns CollectionIR
- */
+interface ParserAction {
+  parse(): Promise<CollectionIR>;
+  validate(): Promise<ValidationResult>;
+}
+
+const parsers: Record<Exclude<SpecFormat, "unknown">, (input: SpecInput) => ParserAction> = {
+  openapi: (input) => bindParser(new OpenApiParser(), input),
+  swagger: (input) => bindParser(new SwaggerParser(), input),
+  graphql: (input) => bindParser(new GraphQLParser(), input),
+  grpc: (input) => bindParser(new GrpcParser(), input),
+  asyncapi: (input) => bindParser(new AsyncApiParser(), input),
+};
+
+/** Unified parse function — resolves the input once, then delegates to its parser. */
 export async function parse(
   input: SpecInput | string,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _options?: ParseOptions,
 ): Promise<CollectionIR> {
-  // Normalize string input to SpecInput
-  const specInput: SpecInput = typeof input === "string" ? { filePath: input } : input;
-
-  // Check if input is a directory
-  if ("filePath" in specInput && fs.existsSync(specInput.filePath)) {
-    const stat = fs.statSync(specInput.filePath);
-    if (stat.isDirectory()) {
-      const dirParser = new DirectoryParser();
-      return dirParser.parse({ dirPath: specInput.filePath });
-    }
-
-    if (isGraphQLFile(specInput.filePath)) {
-      return new GraphQLParser().parse(specInput);
-    }
-    if (isProtoFile(specInput.filePath)) return new GrpcParser().parse(specInput);
-  }
-
-  // Load spec if from file
-  let data: Record<string, unknown>;
-
-  if ("filePath" in specInput) {
-    const loaded = loadSpec(specInput.filePath);
-    data = loaded.data;
-  } else {
-    data = specInput.content as unknown as Record<string, unknown>;
-  }
-
-  // Auto-detect format
-  const format = detectFormat(data, "filePath" in specInput ? specInput.filePath : undefined);
-
-  // Route to appropriate parser
-  switch (format) {
-    case "openapi": {
-      const parser = new OpenApiParser();
-      return parser.parse(specInput);
-    }
-    case "swagger": {
-      const parser = new SwaggerParser();
-      return parser.parse(specInput);
-    }
-    case "graphql": {
-      const parser = new GraphQLParser();
-      return parser.parse(specInput);
-    }
-    case "grpc":
-      return new GrpcParser().parse(specInput);
-    case "asyncapi":
-      return new AsyncApiParser().parse(specInput);
-    default:
-      throw new Error(
-        `Unknown spec format. Could not detect OpenAPI, Swagger, GraphQL, gRPC, or AsyncAPI.`,
-      );
-  }
+  // Kept for backwards-compatible callers while parser-specific options are introduced.
+  void _options;
+  return (await resolveParserAction(input)).parse();
 }
 
-/**
- * Validate a spec — auto-detects format and validates.
- */
+/** Validate a spec using the same input resolution and parser selection as parse(). */
 export async function validate(input: SpecInput | string): Promise<ValidationResult> {
-  const specInput: SpecInput = typeof input === "string" ? { filePath: input } : input;
-
-  if ("filePath" in specInput && fs.existsSync(specInput.filePath)) {
-    const stat = fs.statSync(specInput.filePath);
-    if (stat.isDirectory()) {
-      const dirParser = new DirectoryParser();
-      return dirParser.validate({ dirPath: specInput.filePath });
-    }
-
-    if (isGraphQLFile(specInput.filePath)) {
-      return new GraphQLParser().validate(specInput);
-    }
-    if (isProtoFile(specInput.filePath)) return new GrpcParser().validate(specInput);
-  }
-
-  let data: Record<string, unknown>;
-  let source: string;
-
-  if ("filePath" in specInput) {
-    const loaded = loadSpec(specInput.filePath);
-    data = loaded.data;
-    source = loaded.source;
-  } else {
-    data = specInput.content as unknown as Record<string, unknown>;
-    source = "inline";
-  }
-
-  const format = detectFormat(data, "filePath" in specInput ? specInput.filePath : undefined);
-
-  switch (format) {
-    case "openapi":
-    case "swagger": {
-      const { validateOpenAPI } = await import("./utils/spec-validator.js");
-      return validateOpenAPI(data, source);
-    }
-    case "graphql": {
-      if ("filePath" in specInput) {
-        const fs = await import("node:fs");
-        const content = fs.readFileSync(specInput.filePath, "utf-8");
-        const { validateGraphQL } = await import("./utils/spec-validator.js");
-        return validateGraphQL(content, source);
-      } else {
-        const { validateGraphQL } = await import("./utils/spec-validator.js");
-        return validateGraphQL(specInput.content, source);
-      }
-    }
-    case "grpc":
-      return new GrpcParser().validate(specInput);
-    case "asyncapi":
-      return new AsyncApiParser().validate(specInput);
-    default:
+  try {
+    return (await resolveParserAction(input)).validate();
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith("Unknown spec format.")) {
+      const specInput = normalizeInput(input);
       return {
         valid: false,
-        errors: [{ file: source, message: "Unknown spec format", code: "UNKNOWN_FORMAT" }],
+        errors: [
+          {
+            file: "filePath" in specInput ? specInput.filePath : "inline",
+            message: "Unknown spec format",
+            code: "UNKNOWN_FORMAT",
+          },
+        ],
         warnings: [],
       };
+    }
+    throw error;
   }
 }
 
-function isGraphQLFile(filePath: string): boolean {
-  const extension = path.extname(filePath).toLowerCase();
-  return extension === ".graphql" || extension === ".gql";
+async function resolveParserAction(input: SpecInput | string): Promise<ParserAction> {
+  const specInput = normalizeInput(input);
+
+  if ("filePath" in specInput && fs.existsSync(specInput.filePath)) {
+    if (fs.statSync(specInput.filePath).isDirectory()) {
+      const parser = new DirectoryParser();
+      return {
+        parse: () => parser.parse({ dirPath: specInput.filePath }),
+        validate: () => parser.validate({ dirPath: specInput.filePath }),
+      };
+    }
+
+    const extensionFormat = formatFromExtension(specInput.filePath);
+    if (extensionFormat) return createParserAction(extensionFormat, specInput);
+  }
+
+  const format =
+    ("content" in specInput ? specInput.format : undefined) ?? detectInputFormat(specInput);
+  if (format === "unknown") {
+    throw new Error(
+      "Unknown spec format. Could not detect OpenAPI, Swagger, GraphQL, gRPC, or AsyncAPI.",
+    );
+  }
+  return createParserAction(format, specInput);
 }
 
-function isProtoFile(filePath: string): boolean {
-  return path.extname(filePath).toLowerCase() === ".proto";
+function normalizeInput(input: SpecInput | string): SpecInput {
+  return typeof input === "string" ? { filePath: input } : input;
+}
+
+function detectInputFormat(input: SpecInput): SpecFormat {
+  if ("filePath" in input) {
+    const { data } = loadSpec(input.filePath);
+    return detectFormat(data, input.filePath);
+  }
+  return detectFormat(input.content as unknown as Record<string, unknown>);
+}
+
+function formatFromExtension(filePath: string): "graphql" | "grpc" | undefined {
+  const extension = path.extname(filePath).toLowerCase();
+  if (extension === ".graphql" || extension === ".gql") return "graphql";
+  if (extension === ".proto") return "grpc";
+  return undefined;
+}
+
+function createParserAction(
+  format: Exclude<SpecFormat, "unknown">,
+  input: SpecInput,
+): ParserAction {
+  return parsers[format](input);
+}
+
+function bindParser(
+  parser: {
+    parse(input: SpecInput): Promise<CollectionIR>;
+    validate(input: SpecInput): Promise<ValidationResult>;
+  },
+  input: SpecInput,
+): ParserAction {
+  return {
+    parse: () => parser.parse(input),
+    validate: () => parser.validate(input),
+  };
 }

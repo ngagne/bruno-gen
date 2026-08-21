@@ -1,5 +1,6 @@
 // ─── Collection ────────────────────────────────────────────────────────────
 export type { CollectionIR, CollectionInfo, Server, ServerVariable, Tag } from "./collection.js";
+export type { RequestTransport } from "./transport.js";
 
 // ─── Endpoint ──────────────────────────────────────────────────────────────
 export type { EndpointIR, HttpMethod } from "./endpoint.js";

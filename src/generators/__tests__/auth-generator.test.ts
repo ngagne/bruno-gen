@@ -1,9 +1,24 @@
 import { describe, it, expect } from "vitest";
 import { generateAuthBlock, generateAuthMode, generateAuthVarNames } from "../auth-generator.js";
+import { generateAuthConfigBlock } from "../collection-generator.js";
 import type { SecurityScheme } from "../../ir/index.js";
 
 describe("auth-generator", () => {
   describe("generateAuthBlock", () => {
+    it("uses the same renderer for collection and request auth", () => {
+      const scheme: SecurityScheme = {
+        type: "oauth2",
+        flows: {
+          clientCredentials: {
+            tokenUrl: "https://auth.example.com/token",
+            scopes: { read: "Read access" },
+          },
+        },
+      };
+
+      expect(generateAuthConfigBlock(scheme, "oauth")).toBe(generateAuthBlock(scheme, "oauth"));
+    });
+
     it("generates bearer auth block", () => {
       const scheme: SecurityScheme = { type: "http", scheme: "bearer" };
       const result = generateAuthBlock(scheme, "bearerAuth");

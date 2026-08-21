@@ -54,4 +54,36 @@ describe("planCollection", () => {
       "environments/default.bru",
     );
   });
+
+  it("uses the shared environment renderer for auth, server, and required parameter values", () => {
+    const ir: CollectionIR = {
+      info: { title: "Environment", version: "1" },
+      servers: [{ url: "https://{region}.example.test", variables: { region: { default: "us" } } }],
+      securitySchemes: { token: { type: "http", scheme: "bearer" } },
+      defaultSecurity: [],
+      tags: [],
+      endpoints: [
+        {
+          id: "getUser",
+          method: "get",
+          path: "/users/{id}",
+          tags: [],
+          deprecated: false,
+          parameters: [
+            { name: "id", in: "path", required: true, schema: { type: "integer", default: 42 } },
+          ],
+          responses: [],
+          consumesContentTypes: [],
+        },
+      ],
+      components: { schemas: {}, parameters: {}, responses: {}, requestBodies: {} },
+      extensions: {},
+    };
+
+    const environment = planCollection(ir).files.find((file) => file.kind === "environment");
+    expect(environment?.content).toContain("tokenToken: your-bearer-token-here");
+    expect(environment?.content).toContain("region: us");
+    expect(environment?.content).toContain("id: 42");
+    expect(environment?.content).not.toContain("baseUrl:");
+  });
 });

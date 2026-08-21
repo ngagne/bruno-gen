@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { generateRequestBru } from "../request-generator.js";
+import { generateRequestBru, getRequestTransport } from "../request-generator.js";
 import type { EndpointIR, CollectionIR } from "../../ir/index.js";
 import { bruToJsonV2 } from "@usebruno/lang";
 
@@ -31,6 +31,18 @@ function makeCollection(overrides: Partial<CollectionIR> = {}): CollectionIR {
 }
 
 describe("request-generator", () => {
+  describe("getRequestTransport", () => {
+    it("infers transport for legacy IR and honors an explicit transport", () => {
+      expect(getRequestTransport(makeEndpoint())).toEqual({ kind: "http" });
+      expect(getRequestTransport(makeEndpoint({ graphql: {} as EndpointIR["graphql"] }))).toEqual({
+        kind: "graphql",
+      });
+      expect(getRequestTransport(makeEndpoint({ transport: { kind: "websocket" } }))).toEqual({
+        kind: "websocket",
+      });
+    });
+  });
+
   describe("generateRequestBru", () => {
     it("generates basic request.bru without tests", () => {
       const endpoint = makeEndpoint();

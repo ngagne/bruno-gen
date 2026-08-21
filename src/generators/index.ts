@@ -19,9 +19,11 @@ export type { CollectionBruOptions } from "./collection-generator.js";
 
 export {
   generateEnvironmentBru,
+  collectEnvironmentVars,
   extractBaseUrl,
   generateAuthVars,
 } from "./environment-generator.js";
+export type { EnvironmentVariableOptions } from "./environment-generator.js";
 
 export { generateBrunoJson } from "./bruno-json-generator.js";
 export type { BrunoJson } from "./bruno-json-generator.js";

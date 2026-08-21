@@ -47,6 +47,7 @@ export class GrpcParser {
           parameters: [],
           responses: [],
           consumesContentTypes: [],
+          transport: { kind: "grpc" },
           grpc,
         });
       }

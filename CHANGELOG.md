@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2026-08-21
+
+### Changed
+
+- Consolidated authentication and environment-variable rendering so collection, request, and planned environment output use the same rules.
+- Unified top-level parser selection for parsing and validation; callers may explicitly set `SpecInput.format` for ambiguous inline content.
+- `CollectionBuilder` now shares its parsed IR across immutable derived builders and can use `outputDir` supplied through `withOptions()`.
+- Added an optional `EndpointIR.transport` discriminator for GraphQL, gRPC, and WebSocket endpoints while retaining compatibility with existing IR objects.
+
 ## [1.5.0] - 2026-08-18
 
 ### Added

@@ -5,7 +5,7 @@
 
 import type { CollectionIR } from "../ir/index.js";
 import { formatBlock, formatBlockWithContent } from "./bru-serializer.js";
-import { generateAuthMode } from "./auth-generator.js";
+import { generateAuthBlock, generateAuthMode } from "./auth-generator.js";
 import { extractBaseUrl } from "./environment-generator.js";
 
 interface CollectionBruOptions {
@@ -71,23 +71,7 @@ function generateAuthConfigBlock(
   scheme: CollectionIR["securitySchemes"][string],
   name: string,
 ): string | null {
-  switch (scheme.type) {
-    case "http":
-      if (scheme.scheme === "bearer") {
-        return `auth:bearer {\n  token: {{${name}Token}}\n}`;
-      } else if (scheme.scheme === "basic") {
-        return `auth:basic {\n  username: {{${name}Username}}\n  password: {{${name}Password}}\n}`;
-      }
-      break;
-    case "apiKey":
-      return `auth:apikey {\n  key: ${scheme.name}\n  value: {{${name}Value}}\n  placement: ${scheme.in}\n}`;
-    case "oauth2":
-      // OAuth2 config is complex - use placeholder vars
-      return `auth:oauth2 {\n  grant_type: authorization_code\n  client_id: {{${name}ClientId}}\n  client_secret: {{${name}ClientSecret}}\n  scope: read write\n}`;
-    case "openIdConnect":
-      return `auth:oauth2 {\n  grant_type: authorization_code\n  authorization_url: {{${name}AuthorizationUrl}}\n  access_token_url: {{${name}TokenUrl}}\n  client_id: {{${name}ClientId}}\n  client_secret: {{${name}ClientSecret}}\n  scope: openid profile email\n  pkce: true\n}`;
-  }
-  return null;
+  return generateAuthBlock(scheme, name) || null;
 }
 
 /**

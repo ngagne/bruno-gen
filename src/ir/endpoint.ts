@@ -5,6 +5,7 @@ import type { SecurityRequirement } from "./security.js";
 import type { GraphQLEndpointExtension } from "./graphql.js";
 import type { GrpcEndpointExtension } from "./grpc.js";
 import type { WebSocketEndpointExtension } from "./websocket.js";
+import type { RequestTransport } from "./transport.js";
 
 /** Supported HTTP methods in the Bruno DSL. */
 type HttpMethod = "get" | "post" | "put" | "patch" | "delete" | "head" | "options" | "trace";
@@ -40,6 +41,9 @@ interface EndpointIR {
   producesContentType?: string;
   /** Content types this endpoint accepts. */
   consumesContentTypes: string[];
+
+  /** Optional explicit transport. Omitted legacy endpoints are inferred from their extensions. */
+  transport?: RequestTransport;
 
   /** GraphQL operation metadata used to render a Bruno GraphQL request. */
   graphql?: GraphQLEndpointExtension;

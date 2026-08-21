@@ -3,7 +3,13 @@
  * Includes meta, method, params, headers, body, auth, docs, vars blocks.
  */
 
-import type { EndpointIR, CollectionIR, ParameterIR, SchemaIR } from "../ir/index.js";
+import type {
+  EndpointIR,
+  CollectionIR,
+  ParameterIR,
+  RequestTransport,
+  SchemaIR,
+} from "../ir/index.js";
 import { formatBlock, formatBlockWithContent, serializeValue } from "./bru-serializer.js";
 import { generateExample } from "./example-generator.js";
 import { generateAuthBlock, getEndpointAuthMode } from "./auth-generator.js";
@@ -37,11 +43,12 @@ function generateRequestBru(
   const seq = options?.seq ?? 1;
   const baseUrl = options?.baseUrl ?? "{{baseUrl}}";
   const blocks: string[] = [];
+  const transport = getRequestTransport(endpoint);
 
   // Meta block
   const metaEntries: Record<string, unknown> = {
     name: endpoint.id,
-    type: endpoint.grpc ? "grpc" : endpoint.websocket ? "ws" : "http",
+    type: transport.kind === "grpc" ? "grpc" : transport.kind === "websocket" ? "ws" : "http",
     seq,
   };
   if (endpoint.tags && endpoint.tags.length > 0) {
@@ -53,11 +60,12 @@ function generateRequestBru(
   blocks.push(formatBlock("meta", metaEntries));
 
   // HTTP method block
-  const methodBlock = endpoint.grpc
-    ? generateGrpcBlock(endpoint, baseUrl, options?.grpcProtoPath)
-    : endpoint.websocket
-      ? generateWebSocketBlock(baseUrl)
-      : generateMethodBlock(endpoint, baseUrl);
+  const methodBlock =
+    transport.kind === "grpc"
+      ? generateGrpcBlock(endpoint, baseUrl, options?.grpcProtoPath)
+      : transport.kind === "websocket"
+        ? generateWebSocketBlock(baseUrl)
+        : generateMethodBlock(endpoint, baseUrl);
   blocks.push(methodBlock);
 
   // Path parameters
@@ -85,7 +93,7 @@ function generateRequestBru(
   }
 
   // Request body
-  if (endpoint.grpc || endpoint.graphql || endpoint.websocket || endpoint.requestBody) {
+  if (transport.kind !== "http" || endpoint.requestBody) {
     const bodyBlock = generateBody(endpoint);
     if (bodyBlock) {
       blocks.push(bodyBlock);
@@ -181,6 +189,20 @@ function buildUrl(path: string, baseUrl: string): string {
   // Replace OpenAPI-style path params {param} with Bruno {{param}}
   const brunoPath = path.replace(/\{([^}]+)\}/g, "{{$1}}");
   return `${baseUrl}${brunoPath}`;
+}
+
+/** Infer the transport for legacy IR while allowing new parsers to declare it explicitly. */
+function getRequestTransport(endpoint: EndpointIR): RequestTransport {
+  return (
+    endpoint.transport ??
+    (endpoint.grpc
+      ? { kind: "grpc" }
+      : endpoint.websocket
+        ? { kind: "websocket" }
+        : endpoint.graphql
+          ? { kind: "graphql" }
+          : { kind: "http" })
+  );
 }
 
 /**
@@ -451,6 +473,7 @@ export {
   generateMethodBlock,
   generateGrpcBlock,
   generateWebSocketBlock,
+  getRequestTransport,
   buildUrl,
   generatePathParams,
   generateQueryParams,

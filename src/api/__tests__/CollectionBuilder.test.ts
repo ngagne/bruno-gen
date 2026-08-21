@@ -97,6 +97,28 @@ describe("CollectionBuilder", () => {
       expect(existsSync(join(fixturesDir, "out-cache-1", "collection.bru"))).toBe(true);
       expect(existsSync(join(fixturesDir, "out-cache-2", "collection.bru"))).toBe(true);
     });
+
+    it("shares a parsed IR with derived immutable builders", async () => {
+      const specPath = join(fixturesDir, "cached-source.yaml");
+      writeFileSync(specPath, readFileSync(join(fixturesDir, "valid.yaml"), "utf8"));
+      const builder = CollectionBuilder.fromSpec(specPath);
+      await builder.withOptions({ grouping: "tag" }).generate(join(fixturesDir, "out-shared-1"));
+      rmSync(specPath);
+
+      await expect(
+        builder.withOptions({ grouping: "flat" }).generate(join(fixturesDir, "out-shared-2")),
+      ).resolves.toMatchObject({ success: true });
+    });
+
+    it("uses outputDir configured through withOptions when generate has no argument", async () => {
+      const outputDir = join(fixturesDir, "out-configured-output");
+      await expect(
+        CollectionBuilder.fromSpec(join(fixturesDir, "multi-endpoint.yaml"))
+          .withOptions({ outputDir })
+          .generate(),
+      ).resolves.toMatchObject({ success: true });
+      expect(existsSync(join(outputDir, "collection.bru"))).toBe(true);
+    });
   });
 
   describe("withPlugins()", () => {

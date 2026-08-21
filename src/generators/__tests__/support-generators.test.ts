@@ -12,7 +12,11 @@ import {
   formatMultiline,
   serializeValue,
 } from "../bru-serializer.js";
-import { extractBaseUrl, generateEnvironmentBru } from "../environment-generator.js";
+import {
+  collectEnvironmentVars,
+  extractBaseUrl,
+  generateEnvironmentBru,
+} from "../environment-generator.js";
 import { readBruFile, prepareOutputDir, writeBruFile } from "../file-writer.js";
 import { generatePostResponseVars, generateResponseDocs } from "../response-examples.js";
 import type { CollectionIR, ResponseIR } from "../../ir/index.js";
@@ -63,6 +67,12 @@ describe("environment and response support", () => {
     expect(extractBaseUrl({ ...ir, servers: [] })).toBe("https://api.example.com");
     expect(generateEnvironmentBru(ir)).toContain("keyValue: your-api-key");
     expect(generateEnvironmentBru(ir)).toContain("region: eu");
+  });
+
+  it("shares variable collection while allowing planned environments to omit baseUrl", () => {
+    const vars = collectEnvironmentVars(ir, { includeBaseUrl: false });
+    expect(vars).toEqual({ keyValue: "your-api-key", region: "eu" });
+    expect(generateEnvironmentBru(ir, { includeBaseUrl: false })).not.toContain("baseUrl:");
   });
 
   it("documents response examples and only creates useful post-response variables", () => {

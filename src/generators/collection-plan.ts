@@ -9,9 +9,8 @@
 import type { CollectionIR, EndpointIR } from "../ir/index.js";
 import { generateBrunoJson } from "./bruno-json-generator.js";
 import { generateCollectionBru } from "./collection-generator.js";
-import { generateAuthVars } from "./environment-generator.js";
+import { collectEnvironmentVars, generateEnvironmentBru } from "./environment-generator.js";
 import { generateFolderGroups } from "./folder-generator.js";
-import { formatBlock } from "./bru-serializer.js";
 import { generateRequestBru } from "./request-generator.js";
 import { sanitizeRequestFilename } from "./path-sanitizer.js";
 import path from "node:path";
@@ -46,11 +45,17 @@ function planCollection(ir: CollectionIR, options: CollectionPlanOptions = {}): 
   ];
   const warnings: string[] = [];
 
-  const environmentVars = collectEnvironmentVars(ir);
+  const environmentVars = collectEnvironmentVars(ir, {
+    includeBaseUrl: false,
+    includeRequiredParameters: true,
+  });
   if (Object.keys(environmentVars).length > 0) {
     files.push({
       relativePath: "environments/default.bru",
-      content: formatBlock("vars", environmentVars),
+      content: generateEnvironmentBru(ir, {
+        includeBaseUrl: false,
+        includeRequiredParameters: true,
+      }),
       kind: "environment",
     });
   }
@@ -112,23 +117,6 @@ function planCollection(ir: CollectionIR, options: CollectionPlanOptions = {}): 
   }
 
   return { files, warnings };
-}
-
-function collectEnvironmentVars(ir: CollectionIR): Record<string, string> {
-  const vars = generateAuthVars(ir.securitySchemes);
-
-  for (const [name, serverVar] of Object.entries(ir.servers[0]?.variables ?? {})) {
-    if (serverVar.default) vars[name] = serverVar.default;
-  }
-  for (const endpoint of ir.endpoints) {
-    for (const parameter of endpoint.parameters) {
-      if (parameter.required && vars[parameter.name] === undefined) {
-        vars[parameter.name] = String(parameter.example ?? parameter.schema.default ?? "");
-      }
-    }
-  }
-
-  return vars;
 }
 
 function joinPath(directory: string, filename: string): string {

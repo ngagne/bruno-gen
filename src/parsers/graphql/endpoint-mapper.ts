@@ -125,6 +125,7 @@ function createEndpointFromField(
     responses,
     producesContentType: "application/json",
     consumesContentTypes: ["application/json"],
+    transport: { kind: "graphql" },
     graphql: extension,
     extensions: {
       graphql: extension,

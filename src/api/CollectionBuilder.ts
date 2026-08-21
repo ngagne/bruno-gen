@@ -29,38 +29,34 @@ interface BuilderOptions {
   plugins?: Plugin[];
 }
 
+interface BuilderSource {
+  specPath?: string;
+  ir?: CollectionIR;
+  cachedIR?: Promise<CollectionIR>;
+}
+
 /**
  * Fluent builder for generating Bruno collections.
  * Supports both file-based (fromSpec) and IR-based (fromIR) construction.
  * Caches parsed IR for reuse across multiple .generate() calls.
  */
 class CollectionBuilder {
-  private readonly _specPath?: string;
-  private readonly _ir?: CollectionIR;
+  private readonly _source: BuilderSource;
   private readonly _options: Partial<BuilderOptions>;
-  private readonly _plugins: Plugin[];
-  private _cachedIR?: CollectionIR;
 
-  private constructor(
-    specPath: string | undefined,
-    ir: CollectionIR | undefined,
-    options: Partial<BuilderOptions>,
-    plugins: Plugin[],
-  ) {
-    this._specPath = specPath;
-    this._ir = ir;
+  private constructor(source: BuilderSource, options: Partial<BuilderOptions>) {
+    this._source = source;
     this._options = options;
-    this._plugins = plugins;
   }
 
   /** Create a builder from a spec file path. The spec is parsed on first .generate() call. */
   static fromSpec(specPath: string): CollectionBuilder {
-    return new CollectionBuilder(specPath, undefined, {}, []);
+    return new CollectionBuilder({ specPath }, {});
   }
 
   /** Create a builder from an already-parsed CollectionIR (advanced use). */
   static fromIR(ir: CollectionIR): CollectionBuilder {
-    return new CollectionBuilder(undefined, ir, {}, []);
+    return new CollectionBuilder({ ir }, {});
   }
 
   /**
@@ -74,12 +70,8 @@ class CollectionBuilder {
     if (opts.force !== undefined) merged.force = opts.force;
     if (opts.grouping !== undefined) merged.grouping = opts.grouping;
     if (opts.generateTests !== undefined) merged.generateTests = opts.generateTests;
-    if (opts.plugins !== undefined) {
-      // Replace plugins (caller can use withPlugins instead for explicit control)
-      merged.plugins = opts.plugins;
-    }
-
-    return new CollectionBuilder(this._specPath, this._ir, merged, merged.plugins ?? this._plugins);
+    if (opts.plugins !== undefined) merged.plugins = opts.plugins;
+    return new CollectionBuilder(this._source, merged);
   }
 
   /**
@@ -87,20 +79,17 @@ class CollectionBuilder {
    * Plugins are appended to the existing plugin array.
    */
   withPlugins(plugins: Plugin[]): CollectionBuilder {
-    const mergedPlugins = [...this._plugins, ...plugins];
-    return new CollectionBuilder(
-      this._specPath,
-      this._ir,
-      { ...this._options, plugins: mergedPlugins },
-      mergedPlugins,
-    );
+    return new CollectionBuilder(this._source, {
+      ...this._options,
+      plugins: [...(this._options.plugins ?? []), ...plugins],
+    });
   }
 
   /**
    * Generate the Bruno collection to the specified output directory.
    * Parses the spec (if fromSpec) on first call, then caches the IR for reuse.
    */
-  async generate(outputDir: string): Promise<GenerateResult> {
+  async generate(outputDir = this._options.outputDir): Promise<GenerateResult> {
     // Resolve IR
     const ir = await this._resolveIR();
 
@@ -112,12 +101,12 @@ class CollectionBuilder {
     };
 
     const generateOptions: GenerateOptions = {
-      outputDir,
+      outputDir: outputDir ?? missingOutputDir(),
       force: this._options.force,
       grouping: this._options.grouping,
       generateTests: this._options.generateTests,
-      plugins: this._plugins.length > 0 ? this._plugins : undefined,
-      specPath: this._specPath,
+      plugins: this._options.plugins,
+      specPath: this._source.specPath,
       resolvedConfig,
     };
 
@@ -126,23 +115,21 @@ class CollectionBuilder {
 
   /** Resolve the IR, parsing from spec file if needed (with caching). */
   private async _resolveIR(): Promise<CollectionIR> {
-    if (this._ir) {
-      return this._ir;
+    if (this._source.ir) {
+      return this._source.ir;
     }
 
-    if (!this._specPath) {
+    if (!this._source.specPath) {
       throw new Error("No IR or spec path available. Use fromSpec() or fromIR().");
     }
 
-    // Cache check
-    if (this._cachedIR) {
-      return this._cachedIR;
+    if (!this._source.cachedIR) {
+      this._source.cachedIR = parse(this._source.specPath).catch((error: unknown) => {
+        this._source.cachedIR = undefined;
+        throw error;
+      });
     }
-
-    // Parse spec
-    const ir = await parse(this._specPath);
-    this._cachedIR = ir;
-    return ir;
+    return this._source.cachedIR;
   }
 
   /** Get the current options (read-only). */
@@ -152,8 +139,14 @@ class CollectionBuilder {
 
   /** Get the current plugins (read-only copy). */
   get plugins(): readonly Plugin[] {
-    return [...this._plugins];
+    return [...(this._options.plugins ?? [])];
   }
+}
+
+function missingOutputDir(): never {
+  throw new Error(
+    "No output directory provided. Pass generate(outputDir) or set outputDir with withOptions().",
+  );
 }
 
 export { CollectionBuilder };

@@ -155,6 +155,12 @@ const ir = await parse("./greeter.proto");
 
 // AsyncAPI WebSocket document
 const ir = await parse("./chat.asyncapi.yaml");
+
+// Explicitly select a format when inline content is ambiguous
+const inline = await parse({
+  content: 'openapi: "3.0.0"\ninfo: { title: API, version: "1" }\npaths: {}',
+  format: "openapi",
+});
 ```
 
 ### GraphQL output
@@ -189,6 +195,11 @@ const builder = CollectionBuilder.fromSpec("./openapi.yaml");
 
 await builder.withOptions({ grouping: "tag" }).generate("./out-tag");
 await builder.withOptions({ grouping: "flat" }).generate("./out-flat");
+
+// Or keep the output directory in the immutable builder options
+await CollectionBuilder.fromSpec("./openapi.yaml")
+  .withOptions({ outputDir: "./output", grouping: "tag" })
+  .generate();
 ```
 
 ### `loadConfig(cwd?, configPath?)`

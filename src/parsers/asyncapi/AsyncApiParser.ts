@@ -221,6 +221,7 @@ function toEndpoint(
     parameters: [],
     responses: [],
     consumesContentTypes: [],
+    transport: { kind: "websocket" },
     websocket: { action, messages },
     extensions: { asyncapiChannel: address },
   };

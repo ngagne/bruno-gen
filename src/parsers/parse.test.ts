@@ -10,6 +10,15 @@ afterEach(async () =>
 );
 
 describe("unified parser", () => {
+  it("honors an explicit format for inline documents that cannot be auto-detected as raw text", async () => {
+    await expect(
+      parse({
+        content: 'openapi: "3.0.0"\ninfo:\n  title: Explicit\n  version: "1"\npaths: {}',
+        format: "openapi",
+      }),
+    ).resolves.toMatchObject({ info: { title: "Explicit" } });
+  });
+
   it("routes inline OpenAPI, Swagger, GraphQL, and AsyncAPI input", async () => {
     await expect(
       parse({ content: { openapi: "3.0.0", info: { title: "Open", version: "1" }, paths: {} } }),

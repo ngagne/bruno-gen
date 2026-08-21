@@ -7,33 +7,51 @@ import type { CollectionIR, SecurityScheme } from "../ir/index.js";
 import { generateAuthVarNames } from "./auth-generator.js";
 import { formatBlock } from "./bru-serializer.js";
 
+interface EnvironmentVariableOptions {
+  /** Include the collection's resolved base URL. Defaults to true. */
+  includeBaseUrl?: boolean;
+  /** Include editable placeholders for required endpoint parameters. */
+  includeRequiredParameters?: boolean;
+}
+
 /**
  * Generate environment file content (default.bru).
  * @param ir - The collection IR
  * @returns The environment.bru file content
  */
-function generateEnvironmentBru(ir: CollectionIR): string {
-  const vars: Record<string, unknown> = {};
+function generateEnvironmentBru(
+  ir: CollectionIR,
+  options: EnvironmentVariableOptions = {},
+): string {
+  return formatBlock("vars", collectEnvironmentVars(ir, options));
+}
 
-  // Base URL from first server
-  const baseUrl = extractBaseUrl(ir);
-  vars.baseUrl = baseUrl;
+/** Collect environment values shared by planned and standalone environment output. */
+function collectEnvironmentVars(
+  ir: CollectionIR,
+  options: EnvironmentVariableOptions = {},
+): Record<string, unknown> {
+  const vars: Record<string, unknown> = { ...generateAuthVars(ir.securitySchemes) };
 
-  // Auth variables from all security schemes
-  const authVars = generateAuthVars(ir.securitySchemes);
-  Object.assign(vars, authVars);
+  if (options.includeBaseUrl !== false) {
+    vars.baseUrl = extractBaseUrl(ir);
+  }
 
-  // Server variable defaults
-  if (ir.servers && ir.servers.length > 0 && ir.servers[0].variables) {
-    const serverVars = ir.servers[0].variables;
-    for (const [key, serverVar] of Object.entries(serverVars)) {
-      if (serverVar.default) {
-        vars[key] = serverVar.default;
+  for (const [key, serverVar] of Object.entries(ir.servers[0]?.variables ?? {})) {
+    if (serverVar.default) vars[key] = serverVar.default;
+  }
+
+  if (options.includeRequiredParameters) {
+    for (const endpoint of ir.endpoints) {
+      for (const parameter of endpoint.parameters) {
+        if (parameter.required && vars[parameter.name] === undefined) {
+          vars[parameter.name] = String(parameter.example ?? parameter.schema.default ?? "");
+        }
       }
     }
   }
 
-  return formatBlock("vars", vars);
+  return vars;
 }
 
 /**
@@ -72,4 +90,5 @@ function generateAuthVars(schemes: Record<string, SecurityScheme>): Record<strin
   return vars;
 }
 
-export { generateEnvironmentBru, extractBaseUrl, generateAuthVars };
+export { generateEnvironmentBru, collectEnvironmentVars, extractBaseUrl, generateAuthVars };
+export type { EnvironmentVariableOptions };
