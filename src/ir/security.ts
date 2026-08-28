@@ -56,10 +56,7 @@ interface OpenIdConnectSecurityScheme {
 
 /** All supported security scheme types (discriminated union on `type`). */
 type SecurityScheme =
-  | HttpSecurityScheme
-  | ApiKeySecurityScheme
-  | OAuth2SecurityScheme
-  | OpenIdConnectSecurityScheme;
+  HttpSecurityScheme | ApiKeySecurityScheme | OAuth2SecurityScheme | OpenIdConnectSecurityScheme;
 
 /** A security requirement: scheme name → required scopes. */
 type SecurityRequirement = Record<string, string[]>;

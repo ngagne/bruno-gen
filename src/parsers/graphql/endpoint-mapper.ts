@@ -96,16 +96,14 @@ function createEndpointFromField(
   const extension: GraphQLEndpointExtension = {
     operationType,
     operationName: name,
-    arguments: args.map(
-      (arg: GraphQLArgument): GraphQlArgumentIR => ({
-        name: arg.name,
-        type: mapGraphQLTypeToSchemaField(arg.type),
-        graphqlType: arg.type.toString(),
-        defaultValue: arg.defaultValue,
-        description: arg.description || undefined,
-        directives: [],
-      }),
-    ),
+    arguments: args.map((arg: GraphQLArgument): GraphQlArgumentIR => ({
+      name: arg.name,
+      type: mapGraphQLTypeToSchemaField(arg.type),
+      graphqlType: arg.type.toString(),
+      defaultValue: arg.defaultValue,
+      description: arg.description || undefined,
+      directives: [],
+    })),
     returnType,
     selectionSet: createSelectionSet(field.type as GraphQLOutputType),
     description: field.description || undefined,
