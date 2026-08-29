@@ -65,4 +65,46 @@ describe("DirectoryParser", () => {
 
     fs.rmSync(emptyDir, { recursive: true, force: true });
   });
+
+  it("recognizes directories with .gql files and rejects invalid paths", () => {
+    const gqlDir = fs.mkdtempSync(path.join(os.tmpdir(), "gql-dir-"));
+    const gqlFile = path.join(gqlDir, "schema.gql");
+    fs.writeFileSync(gqlFile, "type Query { ping: String }");
+
+    expect(parser.canParse({ _dirPath: gqlDir })).toBe(true);
+    expect(parser.canParse({ _dirPath: gqlFile })).toBe(false);
+    expect(parser.canParse({ _dirPath: path.join(gqlDir, "missing") })).toBe(false);
+    expect(parser.canParse({})).toBe(false);
+
+    fs.rmSync(gqlDir, { recursive: true, force: true });
+  });
+
+  it("distinguishes missing paths from files during parse", async () => {
+    const missing = path.join(os.tmpdir(), "missing-graphql-directory");
+    const file = path.join(tmpDir, "not-a-directory.txt");
+    fs.writeFileSync(file, "text");
+
+    await expect(parser.parse({ dirPath: missing })).rejects.toThrow(
+      `Directory not found: ${missing}`,
+    );
+    await expect(parser.parse({ dirPath: file })).rejects.toThrow(`Not a directory: ${file}`);
+  });
+
+  it("aggregates validation errors across schema files", async () => {
+    const invalidDir = fs.mkdtempSync(path.join(os.tmpdir(), "invalid-graphql-"));
+    fs.writeFileSync(path.join(invalidDir, "valid.graphql"), "type Query { ping: String }");
+    fs.writeFileSync(path.join(invalidDir, "invalid.gql"), "type Broken {");
+
+    const result = await parser.validate({ dirPath: invalidDir });
+    expect(result.valid).toBe(false);
+    expect(result.errors.length).toBeGreaterThan(0);
+
+    fs.rmSync(invalidDir, { recursive: true, force: true });
+  });
+
+  it("treats unreadable or absent scan roots as containing no schemas", async () => {
+    await expect(
+      parser.validate({ dirPath: path.join(tmpDir, "does-not-exist") }),
+    ).resolves.toEqual({ valid: true, errors: [], warnings: [] });
+  });
 });

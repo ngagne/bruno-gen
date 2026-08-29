@@ -155,4 +155,136 @@ operations:
       errors: [expect.objectContaining({ code: "ASYNCAPI_PARSE_ERROR" })],
     });
   });
+
+  it("reports all structural validation errors for object input", async () => {
+    const result = await new AsyncApiParser().validate({ content: {} });
+
+    expect(result.valid).toBe(false);
+    expect(result.errors.map((error) => error.code)).toEqual([
+      "ASYNCAPI_VERSION",
+      "ASYNCAPI_INFO",
+      "ASYNCAPI_WEBSOCKET_SERVER",
+    ]);
+  });
+
+  it("rejects valid metadata that contains no usable WebSocket operations", async () => {
+    await expect(
+      new AsyncApiParser().parse({
+        content: {
+          asyncapi: "3.0.0",
+          info: { title: "Empty Socket", version: "1" },
+          servers: { local: { protocol: "ws", host: "localhost" } },
+          channels: {},
+          operations: {
+            invalidAction: { action: "reply" },
+            missingChannel: { action: "send", channel: { $ref: "#/channels/missing" } },
+            scalarOperation: "invalid",
+          },
+        },
+      }),
+    ).rejects.toThrow("no WebSocket operations");
+  });
+
+  it("maps operation metadata, object tags, message examples, and direct channels", async () => {
+    const ir = await new AsyncApiParser().parse({
+      content: {
+        asyncapi: "3.0.0",
+        info: { title: "Detailed Socket", version: "1", description: "Realtime events" },
+        servers: {
+          local: {
+            protocol: "ws",
+            host: "localhost:9000",
+            pathname: "/events",
+            variables: {
+              tenant: { default: 7, description: "Tenant identifier" },
+              ignored: "invalid",
+            },
+          },
+        },
+        operations: {
+          sendEvent: {
+            action: "send",
+            summary: "Send an event",
+            description: "Publishes one event",
+            deprecated: true,
+            tags: [{ name: "events" }, { label: "ignored" }, "realtime"],
+            channel: {
+              address: "events",
+              messages: {
+                event: {
+                  name: "event",
+                  examples: [{ payload: { id: 42 } }],
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    expect(ir.info.description).toBe("Realtime events");
+    expect(ir.servers[0]).toMatchObject({
+      url: "ws://localhost:9000/events",
+      variables: {
+        tenant: { default: "7", description: "Tenant identifier" },
+      },
+    });
+    expect(ir.endpoints[0]).toMatchObject({
+      summary: "Send an event",
+      description: "Publishes one event",
+      deprecated: true,
+      tags: ["events", "realtime"],
+      websocket: {
+        messages: [expect.objectContaining({ content: '{\n  "id": 42\n}' })],
+      },
+    });
+  });
+
+  it("resolves component message references and preserves unresolved references safely", async () => {
+    const ir = await new AsyncApiParser().parse({
+      content: {
+        asyncapi: "3.0.0",
+        info: { title: "References", version: "1" },
+        servers: { local: { protocol: "wss", host: "socket.example.com" } },
+        channels: { events: { address: "events" } },
+        components: {
+          messages: {
+            Count: { title: "count", payload: { type: "integer", default: 3 } },
+          },
+        },
+        operations: {
+          send: {
+            action: "send",
+            channel: { $ref: "#/channels/events" },
+            messages: [
+              { $ref: "#/components/messages/Count" },
+              { $ref: "#/components/messages/Missing" },
+            ],
+          },
+        },
+      },
+    });
+
+    expect(ir.endpoints[0].websocket?.messages).toEqual([
+      { name: "count", type: "json", content: "3", selected: true },
+      { name: "message 2", type: "json", content: "{}", selected: false },
+    ]);
+  });
+
+  it("uses deterministic AsyncAPI 2 operation IDs and ignores invalid channels", async () => {
+    const ir = await new AsyncApiParser().parse({
+      content: {
+        asyncapi: "2.6.0",
+        info: { title: "Legacy", version: "1" },
+        servers: { local: { protocol: "ws" } },
+        channels: {
+          notices: { publish: { message: { payload: { type: "string" } } } },
+          ignored: "invalid",
+        },
+      },
+    });
+
+    expect(ir.servers[0].url).toBe("ws://localhost");
+    expect(ir.endpoints[0]).toMatchObject({ id: "publish-notices", tags: ["websocket"] });
+  });
 });

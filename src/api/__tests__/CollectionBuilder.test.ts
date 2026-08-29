@@ -66,6 +66,37 @@ describe("CollectionBuilder", () => {
       expect(original.options.grouping).toBeUndefined();
       expect(original.options.generateTests).toBeUndefined();
     });
+
+    it("retains every explicitly configured generation option", () => {
+      const plugin: Plugin = { name: "configured", hooks: {} };
+      const builder = CollectionBuilder.fromSpec(join(fixturesDir, "valid.yaml")).withOptions({
+        outputDir: join(fixturesDir, "configured"),
+        force: false,
+        grouping: "flat",
+        generateTests: false,
+        plugins: [plugin],
+      });
+
+      expect(builder.options).toEqual({
+        outputDir: join(fixturesDir, "configured"),
+        force: false,
+        grouping: "flat",
+        generateTests: false,
+        plugins: [plugin],
+      });
+      expect(builder.plugins).toEqual([plugin]);
+    });
+
+    it("ignores undefined updates instead of erasing prior options", () => {
+      const configured = CollectionBuilder.fromSpec(join(fixturesDir, "valid.yaml")).withOptions({
+        force: true,
+        grouping: "path",
+        generateTests: true,
+      });
+      expect(
+        configured.withOptions({ force: undefined, grouping: undefined }).options,
+      ).toMatchObject({ force: true, grouping: "path", generateTests: true });
+    });
   });
 
   describe("generate()", () => {
@@ -119,6 +150,24 @@ describe("CollectionBuilder", () => {
       ).resolves.toMatchObject({ success: true });
       expect(existsSync(join(outputDir, "collection.bru"))).toBe(true);
     });
+
+    it("requires an output directory", async () => {
+      const ir = await parse(join(fixturesDir, "valid.yaml"));
+      await expect(CollectionBuilder.fromIR(ir).generate()).rejects.toThrow(
+        "No output directory provided",
+      );
+    });
+
+    it("retries parsing after a failed parse", async () => {
+      const specPath = join(fixturesDir, "created-after-failure.yaml");
+      const builder = CollectionBuilder.fromSpec(specPath);
+      await expect(builder.generate(join(fixturesDir, "failed-output"))).rejects.toThrow();
+
+      writeFileSync(specPath, readFileSync(join(fixturesDir, "valid.yaml"), "utf8"));
+      await expect(builder.generate(join(fixturesDir, "retried-output"))).resolves.toMatchObject({
+        success: true,
+      });
+    });
   });
 
   describe("withPlugins()", () => {
@@ -151,6 +200,19 @@ describe("CollectionBuilder", () => {
       const original = CollectionBuilder.fromSpec(join(fixturesDir, "valid.yaml"));
       const modified = original.withPlugins([{ name: "test", hooks: {} }]);
       expect(modified).not.toBe(original);
+    });
+
+    it("appends plugins while keeping plugin getters defensive", () => {
+      const first: Plugin = { name: "first", hooks: {} };
+      const second: Plugin = { name: "second", hooks: {} };
+      const builder = CollectionBuilder.fromSpec(join(fixturesDir, "valid.yaml"))
+        .withPlugins([first])
+        .withPlugins([second]);
+
+      const plugins = builder.plugins as Plugin[];
+      plugins.pop();
+      expect(builder.plugins.map((plugin) => plugin.name)).toEqual(["first", "second"]);
+      expect(CollectionBuilder.fromSpec(join(fixturesDir, "valid.yaml")).plugins).toEqual([]);
     });
   });
 });

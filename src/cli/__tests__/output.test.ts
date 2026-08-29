@@ -78,6 +78,12 @@ describe("cli/output", () => {
       const spinner = createSpinner("Loading...");
       expect(spinner.start()).toBeDefined();
     });
+
+    it("supports direct completion calls in non-TTY mode", () => {
+      const spinner = createSpinner("Loading...");
+      expect(() => spinner.succeed("Done")).not.toThrow();
+      expect(() => spinner.fail("Failed")).not.toThrow();
+    });
   });
 
   describe("formatSummary", () => {
@@ -161,6 +167,12 @@ describe("cli/output", () => {
       const result = formatError(error, true);
       expect(result).toContain("Something went wrong");
       expect(result).toContain("at someFile.ts");
+    });
+
+    it("falls back to the message when verbose errors have no stack", () => {
+      const error = new Error("No stack");
+      error.stack = undefined;
+      expect(formatError(error, true)).toBe("Error: No stack\n");
     });
   });
 });

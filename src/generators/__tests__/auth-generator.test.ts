@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { generateAuthBlock, generateAuthMode, generateAuthVarNames } from "../auth-generator.js";
+import {
+  generateAuthBlock,
+  generateAuthMode,
+  generateAuthVarNames,
+  generateOAuth2AuthBlock,
+} from "../auth-generator.js";
 import { generateAuthConfigBlock } from "../collection-generator.js";
 import type { SecurityScheme } from "../../ir/index.js";
 
@@ -78,6 +83,69 @@ describe("auth-generator", () => {
       expect(result).toContain("scope: openid profile email");
       expect(result).toContain("pkce: true");
     });
+
+    it("supports digest auth and rejects unsupported HTTP schemes", () => {
+      expect(generateAuthBlock({ type: "http", scheme: "digest" }, "digest")).toContain(
+        "auth:digest",
+      );
+      expect(
+        generateAuthBlock(
+          { type: "http", scheme: "negotiate" } as unknown as SecurityScheme,
+          "unsupported",
+        ),
+      ).toBe("");
+    });
+
+    it("renders each OAuth flow with its flow-specific settings", () => {
+      const implicit = generateOAuth2AuthBlock(
+        {
+          type: "oauth2",
+          flows: {
+            implicit: {
+              authorizationUrl: "https://auth.example.com/authorize",
+              refreshUrl: "https://auth.example.com/refresh",
+              scopes: {},
+            },
+          },
+        },
+        "implicit",
+      );
+      expect(implicit).toContain("grant_type: implicit");
+      expect(implicit).toContain("authorization_url: https://auth.example.com/authorize");
+      expect(implicit).toContain("refresh_url: https://auth.example.com/refresh");
+      expect(implicit).toContain("pkce: false");
+      expect(implicit).not.toContain("scope:");
+
+      const password = generateOAuth2AuthBlock(
+        {
+          type: "oauth2",
+          flows: {
+            password: { tokenUrl: "https://auth.example.com/token", scopes: {} },
+          },
+        },
+        "password",
+      );
+      expect(password).toContain("grant_type: password");
+      expect(password).toContain("access_token_url: https://auth.example.com/token");
+      expect(password).toContain("pkce: true");
+
+      const clientCredentials = generateOAuth2AuthBlock(
+        {
+          type: "oauth2",
+          flows: {
+            clientCredentials: { tokenUrl: "https://auth.example.com/token", scopes: {} },
+          },
+        },
+        "client",
+      );
+      expect(clientCredentials).toContain("grant_type: client_credentials");
+    });
+
+    it("returns an empty OAuth block when no flow is configured", () => {
+      expect(generateOAuth2AuthBlock({ type: "oauth2", flows: {} }, "oauth")).toBe(
+        "auth:oauth2 { }",
+      );
+    });
   });
 
   describe("generateAuthMode", () => {
@@ -106,6 +174,17 @@ describe("auth-generator", () => {
         } as SecurityScheme,
       };
       expect(generateAuthMode(schemes)).toBe("oauth2");
+    });
+
+    it("maps OpenID Connect to oauth2", () => {
+      expect(
+        generateAuthMode({
+          oidc: {
+            type: "openIdConnect",
+            openIdConnectUrl: "https://auth.example.com/.well-known/openid-configuration",
+          },
+        }),
+      ).toBe("oauth2");
     });
 
     it("returns none for empty schemes", () => {
@@ -147,6 +226,33 @@ describe("auth-generator", () => {
       expect(vars).toHaveProperty("oauth2ClientId", "your-client-id");
       expect(vars).toHaveProperty("oauth2ClientSecret", "your-client-secret");
       expect(vars).toHaveProperty("oauth2Scope");
+    });
+
+    it("generates digest, OIDC, and fallback OAuth variables", () => {
+      expect(generateAuthVarNames({ type: "http", scheme: "digest" }, "digest")).toEqual({
+        digestUsername: "your-username",
+        digestPassword: "your-password",
+      });
+
+      expect(
+        generateAuthVarNames(
+          {
+            type: "openIdConnect",
+            openIdConnectUrl: "https://auth.example.com/.well-known/openid-configuration",
+          },
+          "oidc",
+        ),
+      ).toMatchObject({
+        oidcAuthorizationUrl: "https://auth.example.com/authorize",
+        oidcTokenUrl: "https://auth.example.com/token",
+        oidcScope: "openid profile email",
+      });
+
+      expect(generateAuthVarNames({ type: "oauth2", flows: {} }, "oauth")).toMatchObject({
+        oauthClientId: "your-client-id",
+        oauthClientSecret: "your-client-secret",
+        oauthScope: "read write",
+      });
     });
   });
 });

@@ -74,6 +74,10 @@ describe("loadConfig", () => {
     expect(config).toEqual({});
   });
 
+  it("returns empty defaults for a missing explicit config", async () => {
+    await expect(loadConfig(undefined, join(fixturesDir, "missing.yaml"))).resolves.toEqual({});
+  });
+
   it("parses YAML correctly", async () => {
     const config = await loadConfig(fixturesDir, join(fixturesDir, "brunogen.config.yaml"));
     expect(config.spec).toBe("./openapi.yaml");
@@ -100,5 +104,26 @@ describe("loadConfig", () => {
     // YML comes first in CONFIG_FILENAMES, so it should win
     const config = await loadConfig(fixturesDir);
     expect(config.spec).toBe("./other.yaml"); // from brunogen.config.yml
+  });
+
+  it("parses extensionless JSON and YAML configs", async () => {
+    const jsonPath = join(fixturesDir, "json-config");
+    const yamlPath = join(fixturesDir, "yaml-config");
+    writeFileSync(jsonPath, '{"format":"flat"}');
+    writeFileSync(yamlPath, "format: tag\ntests: true\n");
+
+    await expect(loadConfig(undefined, jsonPath)).resolves.toMatchObject({ format: "flat" });
+    await expect(loadConfig(undefined, yamlPath)).resolves.toMatchObject({
+      format: "tag",
+      tests: true,
+    });
+  });
+
+  it("wraps invalid extensionless config errors with the source path", async () => {
+    const invalidPath = join(fixturesDir, "invalid-config");
+    writeFileSync(invalidPath, "value: [unterminated");
+    await expect(loadConfig(undefined, invalidPath)).rejects.toThrow(
+      `Failed to parse config file ${invalidPath}`,
+    );
   });
 });

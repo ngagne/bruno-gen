@@ -170,6 +170,35 @@ describe("test-generator", () => {
       expect(result).toContain("expected status 201");
     });
 
+    it("uses the status code as the label when description is absent", () => {
+      const response: ResponseIR = {
+        statusCode: "204",
+        description: "",
+        headers: {},
+        content: { "application/json": { schema: { type: "object" } } },
+        links: {},
+      };
+      expect(generatePostResponseTests([response])).toContain('test("204"');
+    });
+
+    it("uses the first object-shaped named example", () => {
+      const response: ResponseIR = {
+        statusCode: "200",
+        description: 'Quoted "response"',
+        headers: {},
+        content: {
+          "application/json": {
+            schema: { type: "object" },
+            examples: { first: { value: { message: 'say "hello"' } } },
+          },
+        },
+        links: {},
+      };
+      const result = generatePostResponseTests([response]);
+      expect(result).toContain('test("200 Quoted \\"response\\""');
+      expect(result).toContain("res.body.message").toContain('say \\"hello\\"');
+    });
+
     it("returns empty string when no eligible responses", () => {
       const responses: ResponseIR[] = [];
       expect(generatePostResponseTests(responses)).toBe("");
@@ -291,6 +320,15 @@ describe("test-generator", () => {
         schema: { type: "object" },
       };
       expect(getRequiredFields(mediaType)).toEqual([]);
+    });
+
+    it("filters malformed required entries", () => {
+      expect(
+        getRequiredFields({ schema: { required: ["id", 42, null] } } as unknown as {
+          schema: unknown;
+        }),
+      ).toEqual(["id"]);
+      expect(getRequiredFields({ schema: undefined })).toEqual([]);
     });
   });
 
