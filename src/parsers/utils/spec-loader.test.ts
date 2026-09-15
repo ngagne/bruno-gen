@@ -38,7 +38,10 @@ describe("spec-loader", () => {
 
   it("falls back to YAML parsing when a file extension is unknown", () => {
     const filePath = path.join(tmpDir, "spec.unknown");
-    fs.writeFileSync(filePath, "openapi: 3.0.0\ninfo:\n  title: Unknown Extension\n  version: '1.0.0'\n");
+    fs.writeFileSync(
+      filePath,
+      "openapi: 3.0.0\ninfo:\n  title: Unknown Extension\n  version: '1.0.0'\n",
+    );
 
     const result = loadSpec(filePath);
     expect(result.data).toHaveProperty("openapi", "3.0.0");
