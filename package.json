@@ -48,12 +48,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ngagne/gen-bruno"
+    "url": "https://github.com/ngagne/bruno-gen"
   },
   "bugs": {
-    "url": "https://github.com/ngagne/gen-bruno/issues"
+    "url": "https://github.com/ngagne/bruno-gen/issues"
   },
-  "homepage": "https://github.com/ngagne/gen-bruno#readme",
+  "homepage": "https://github.com/ngagne/bruno-gen#readme",
   "files": [
     "dist/",
     "README.md",
