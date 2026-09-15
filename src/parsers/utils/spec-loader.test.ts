@@ -36,6 +36,26 @@ describe("spec-loader", () => {
     expect(() => loadSpec("/nonexistent/file.yaml")).toThrow("Spec file not found");
   });
 
+  it("falls back to YAML parsing when a file extension is unknown", () => {
+    const filePath = path.join(tmpDir, "spec.unknown");
+    fs.writeFileSync(filePath, "openapi: 3.0.0\ninfo:\n  title: Unknown Extension\n  version: '1.0.0'\n");
+
+    const result = loadSpec(filePath);
+    expect(result.data).toHaveProperty("openapi", "3.0.0");
+    expect(result.data).toHaveProperty("info.title", "Unknown Extension");
+
+    fs.unlinkSync(filePath);
+  });
+
+  it("rejects JSON/YAML documents that are not objects", () => {
+    const filePath = path.join(tmpDir, "invalid-root.json");
+    fs.writeFileSync(filePath, JSON.stringify(["not", "an", "object"]));
+
+    expect(() => loadSpec(filePath)).toThrow("expected a JSON/YAML object");
+
+    fs.unlinkSync(filePath);
+  });
+
   it("throws error for invalid YAML", () => {
     const filePath = path.join(tmpDir, "invalid.yaml");
     fs.writeFileSync(filePath, ": invalid: yaml: [");

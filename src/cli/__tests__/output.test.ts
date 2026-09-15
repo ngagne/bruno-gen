@@ -84,6 +84,15 @@ describe("cli/output", () => {
       expect(() => spinner.succeed("Done")).not.toThrow();
       expect(() => spinner.fail("Failed")).not.toThrow();
     });
+
+    it("supports the interactive spinner lifecycle in TTY mode", () => {
+      (process.stdout as unknown as { isTTY: boolean }).isTTY = true;
+      const spinner = createSpinner("Loading...");
+
+      expect(() => spinner.start().succeed("Done")).not.toThrow();
+      expect(() => spinner.fail("Failed")).not.toThrow();
+      expect(() => spinner.start().fail("Error")).not.toThrow();
+    });
   });
 
   describe("formatSummary", () => {
